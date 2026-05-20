@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ReaPack manifest for MoreMe 2.
+
+  To publish: host this file plus the three source files at stable URLs
+  (GitHub Pages, GitHub Releases raw URLs, or any web host that serves
+  files over HTTPS). Replace every YOUR-USERNAME / YOUR-REPO placeholder
+  below with your real GitHub (or other) coordinates.
+
+  Users add the resulting index.xml URL to ReaPack via:
+    Extensions menu -> ReaPack -> Manage repositories -> Import...
+  After importing, they refresh the repository and install MoreMe 2 with
+  a single click. ReaPack handles file placement, updates, and removal.
+-->
+<index version="1" name="MoreMe 2">
+  <metadata>
+    <description><![CDATA[
+Personal monitor mixer for REAPER. Each performer opens a phone/tablet/laptop
+page, picks their monitor track, and dials in their own mix of receives.
+Includes a Project Settings view for live tempo and time-signature changes.
+
+Source: https://github.com/YOUR-USERNAME/YOUR-REPO
+]]></description>
+    <link rel="website">https://github.com/YOUR-USERNAME/YOUR-REPO</link>
+  </metadata>
+
+  <!-- ============================================================== -->
+  <!-- Web page (HTML). Installs to reaper_www_root/.                  -->
+  <!-- ============================================================== -->
+  <category name="Web Interfaces">
+    <reapack name="more_me_2.html" type="webinterface" desc="MoreMe 2 personal monitor mixer">
+      <metadata>
+        <description><![CDATA[
+Performer-facing monitor mixer plus a Project Settings panel for tempo and
+time signature. Layout auto-flips between horizontal (portrait) and vertical
+(landscape) channel strips. Persists user preferences in localStorage.
+]]></description>
+        <link rel="website">https://github.com/YOUR-USERNAME/YOUR-REPO</link>
+      </metadata>
+      <version name="1.0.0" author="Ari Kuorikoski" time="2026-05-19T12:00:00Z">
+        <changelog><![CDATA[
++ Initial release.
++ Orientation-based layout switching (portrait = horizontal sliders, landscape = vertical channel strips).
++ Manual layout-mode override via URL hash and toggle button (Auto / Vertical / Horizontal).
++ Project Settings panel with tempo (via OSC) and time signature (via companion ReaScript).
++ Auto-discovery of the time-sig action ID via REAPER ExtState; manual paste available as fallback.
+]]></changelog>
+        <!-- 'file' attribute overrides where ReaPack drops it. webinterface
+             type defaults to reaper_www_root, but being explicit doesn't hurt. -->
+        <source file="more_me_2.html">https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/more_me_2.html</source>
+        <source file="more_me_2.md">https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/more_me_2.md</source>
+      </version>
+    </reapack>
+  </category>
+
+  <!-- ============================================================== -->
+  <!-- Companion ReaScript. Installs to Scripts/.                     -->
+  <!-- ============================================================== -->
+  <category name="Scripts/MoreMe">
+    <reapack name="moreme_set_timesig.lua" type="script" desc="MoreMe 2: apply time signature from project ExtState">
+      <metadata>
+        <description><![CDATA[
+Companion ReaScript for the more_me_2.html web page. Reads numerator and
+denominator from project ExtState (section "MoreMe", keys "tsig_num" and
+"tsig_den"), applies them as the project's initial time signature, and
+self-registers its command ID into ExtState so the web page can auto-discover
+it. Run once from the Action List after install for self-registration.
+]]></description>
+        <link rel="website">https://github.com/YOUR-USERNAME/YOUR-REPO</link>
+      </metadata>
+      <version name="1.0.0" author="Ari Kuorikoski" time="2026-05-19T12:00:00Z">
+        <changelog><![CDATA[
++ Initial release. Sets project time signature non-interactively via
+  SetTempoTimeSigMarker(). Self-registers its command ID for the web page.
+]]></changelog>
+        <source>https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/moreme_set_timesig.lua</source>
+      </version>
+    </reapack>
+
+    <reapack name="moreme_monitor.lua" type="script" desc="MoreMe 2: optional background monitor for live tempo readback">
+      <metadata>
+        <description><![CDATA[
+Optional companion script. Runs continuously in the background and writes
+the project's current tempo into ExtState so the more_me_2.html page can
+display live tempo updates. Toggle on/off by running the action from the
+REAPER Action List. Add to __startup.lua to auto-launch at REAPER start.
+]]></description>
+        <link rel="website">https://github.com/YOUR-USERNAME/YOUR-REPO</link>
+      </metadata>
+      <version name="1.0.0" author="Ari Kuorikoski" time="2026-05-19T12:00:00Z">
+        <changelog><![CDATA[
++ Initial release. Defer-based loop with single-instance guard.
+]]></changelog>
+        <source>https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/moreme_monitor.lua</source>
+      </version>
+    </reapack>
+  </category>
+
+  <!-- ============================================================== -->
+  <!-- Documentation as a "data" pack so it lands somewhere sensible. -->
+  <!-- (Optional - users can skip installing this category if they    -->
+  <!-- don't want the extra .md files in their REAPER data folder.)   -->
+  <!-- ============================================================== -->
+  <category name="Data/MoreMe">
+    <reapack name="MoreMe 2 documentation" type="data" desc="MoreMe 2 install & feature documentation">
+      <metadata>
+        <description>Install guide and feature reference for MoreMe 2. Plain markdown; read in any editor.</description>
+        <link rel="website">https://github.com/YOUR-USERNAME/YOUR-REPO</link>
+      </metadata>
+      <version name="1.0.0" author="Ari Kuorikoski" time="2026-05-19T12:00:00Z">
+        <changelog>+ Initial documentation.</changelog>
+        <source file="MoreMe/INSTALL.md">https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/INSTALL.md</source>
+        <source file="MoreMe/more_me_2.md">https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/more_me_2.md</source>
+      </version>
+    </reapack>
+  </category>
+
+</index>

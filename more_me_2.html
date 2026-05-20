@@ -1,0 +1,1445 @@
+<!doctype html>
+<html><head>
+<meta charset="utf-8" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=0" />
+
+<title>MoreMe Personal Monitor</title>
+<link href="http://fonts.googleapis.com/css?family=Open+Sans:400,300,700" rel="stylesheet" type="text/css">
+<script src="main.js"></script>
+
+<style type="text/css">
+
+    body {
+        background-color:#333333;
+        color:#A9ABAB;
+        font-family: 'Open Sans',sans-serif;
+        font-size: 1em;
+        text-align: center;
+        margin:0px;
+        user-select: none;
+        cursor: default;
+        }
+    #appContainer {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 12px 12px 24px 12px;
+        box-sizing: border-box;
+        }
+   #trackSelect {
+        width:100%;
+        color:#A9ABAB;
+        background-color:#262626;
+        border: none;
+        font-size: 1.5em;
+        padding:3%;
+        -webkit-border-radius: 20px;
+        -moz-border-radius: 20px;
+        border-radius: 20px;
+        -webkit-appearance: none;
+        box-sizing: border-box;
+        }
+    select option:first-child{
+        color: #555555;
+        font-style: italic;
+        }
+   #instructions {
+        display : block;
+        padding : 0% 10% 0% 10%;
+        }
+    .button:hover .mouseover {
+        visibility:visible;
+        }
+    .button:active .mouseover {
+        visibility:hidden;
+        pointer-events:all;
+        }
+    .button:active .shadow {
+        visibility: hidden;
+        }
+    .button:active .gloss {
+        visibility: hidden;
+        }
+    .button:active .active {
+        visibility: visible;
+        }
+
+    /* ===== Vertical channel strip (used in landscape) ===== */
+    #vertMixer {
+        display: none;
+        }
+    .vertChan {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        width: 72px;
+        margin: 4px;
+        vertical-align: top;
+        }
+    .vertChan.vertMain {
+        width: 80px;
+        }
+    .vertDb {
+        height: 18px;
+        font-size: 0.75em;
+        color: #A3A3A3;
+        margin-bottom: 4px;
+        line-height: 18px;
+        }
+    .vertSlider {
+        display: block;
+        width: 100%;
+        height: 50vh;
+        max-height: 320px;
+        min-height: 160px;
+        cursor: pointer;
+        touch-action: none;
+        }
+    .vertChan.vertMain .vertSlider {
+        width: 100%;
+        }
+    .vertControls {
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        height: 28px;
+        }
+    .vertMute {
+        background: #404040;
+        color: #A3A3A3;
+        border: 1px solid #1A1A1A;
+        border-radius: 4px;
+        width: 40px;
+        height: 26px;
+        font-family: 'Open Sans', sans-serif;
+        font-weight: bold;
+        font-size: 13px;
+        cursor: pointer;
+        padding: 0;
+        outline: none;
+        }
+    .vertMute.muted {
+        background: #F13F24;
+        color: #FFFFFF;
+        }
+    .vertTitle {
+        margin-top: 6px;
+        font-size: 0.8em;
+        color: #A3A3A3;
+        width: 100%;
+        word-wrap: break-word;
+        line-height: 1.2;
+        min-height: 28px;
+        }
+    .vertChan.vertMain .vertTitle {
+        font-weight: bold;
+        color: #D0D0D0;
+        }
+
+    /* ===== Track-select row (dropdown + mode toggle button) ===== */
+    #trackSelectRow {
+        display: flex;
+        align-items: stretch;
+        gap: 8px;
+        margin-bottom: 16px;
+        }
+    #trackSelectRow #trackSelect {
+        flex: 1 1 auto;
+        min-width: 0;
+        margin: 0;
+        }
+    #modeToggle {
+        flex: 0 0 auto;
+        width: 56px;
+        background-color: #262626;
+        color: #A9ABAB;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-appearance: none;
+        outline: none;
+        }
+    #modeToggle:active {
+        background-color: #1A1A1A;
+        }
+    #modeToggle svg {
+        width: 26px;
+        height: 26px;
+        display: block;
+        }
+
+    /* ===== Orientation-based layout switch (default behaviour) ===== */
+    /* Portrait: original horizontal slider layout. */
+    @media (orientation: portrait) {
+        .trackRow2, #receives { display: block; }
+        #vertMixer { display: none; }
+        }
+    /* Landscape: vertical channel strips, side by side. */
+    @media (orientation: landscape) {
+        .trackRow2 { display: none; }
+        #receives { display: none; }
+        #vertMixer {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 6px;
+            padding: 8px;
+            }
+        #appContainer {
+            max-width: 100%;
+            padding: 8px 16px 24px 16px;
+            }
+        #instructions {
+            padding: 0 15% 0 15%;
+            }
+        }
+
+    /* ===== Manual mode override (set by JS via body class) =====
+       Specificity (1,1,1) beats the @media rules so these win regardless
+       of the device's actual orientation. */
+    body.force-horiz .trackRow2,
+    body.force-horiz #receives { display: block; }
+    body.force-horiz #vertMixer { display: none; }
+    body.force-horiz #appContainer {
+        max-width: 640px;
+        padding: 12px 12px 24px 12px;
+        }
+
+    body.force-vert .trackRow2,
+    body.force-vert #receives { display: none; }
+    body.force-vert #vertMixer {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: flex-start;
+        gap: 6px;
+        padding: 8px;
+        }
+    body.force-vert #appContainer {
+        max-width: 100%;
+        padding: 8px 16px 24px 16px;
+        }
+
+    /* ===== Project Settings panel ===== */
+    #settingsPanel {
+        display: none;
+        padding: 16px;
+        text-align: center;
+        }
+    body.in-settings #settingsPanel { display: block; }
+    /* Hide mixer + instructions while in settings view (wins over all
+       orientation and force-mode rules via !important since those each
+       have specificity 1,1,1 and varying source order). */
+    body.in-settings .trackRow2,
+    body.in-settings #receives,
+    body.in-settings #vertMixer,
+    body.in-settings #instructions {
+        display: none !important;
+        }
+    #settingsPanel h2 {
+        font-size: 1.1em;
+        color: #D0D0D0;
+        margin: 0 0 20px 0;
+        font-weight: normal;
+        letter-spacing: 0.05em;
+        }
+    .settingField {
+        margin-bottom: 28px;
+        }
+    .settingLabel {
+        display: block;
+        color: #A3A3A3;
+        margin-bottom: 10px;
+        font-size: 0.9em;
+        letter-spacing: 0.03em;
+        }
+    .tempoCtrl, .tsigCtrl {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: center;
+        }
+    .tempoBtn {
+        background-color: #262626;
+        color: #A9ABAB;
+        border: 1px solid #1A1A1A;
+        border-radius: 10px;
+        min-width: 52px;
+        height: 44px;
+        font-family: 'Open Sans', sans-serif;
+        font-size: 14px;
+        font-weight: bold;
+        cursor: pointer;
+        padding: 0 8px;
+        outline: none;
+        -webkit-appearance: none;
+        }
+    .tempoBtn:active { background-color: #1A1A1A; }
+    #tempoInput, #tsigNum, #tsigDen {
+        background-color: #262626;
+        color: #E0E0E0;
+        border: 1px solid #1A1A1A;
+        border-radius: 10px;
+        height: 44px;
+        font-family: 'Open Sans', sans-serif;
+        font-size: 1.3em;
+        text-align: center;
+        padding: 0 8px;
+        box-sizing: border-box;
+        -webkit-appearance: none;
+        -moz-appearance: textfield;
+        appearance: none;
+        outline: none;
+        }
+    #tempoInput { width: 88px; }
+    #tsigNum { width: 64px; }
+    #tsigDen { width: 64px; padding-right: 24px; }
+    #tempoInput::-webkit-inner-spin-button,
+    #tempoInput::-webkit-outer-spin-button,
+    #tsigNum::-webkit-inner-spin-button,
+    #tsigNum::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+        }
+    .tsigSep {
+        color: #E0E0E0;
+        font-size: 1.5em;
+        font-weight: 300;
+        margin: 0 2px;
+        }
+    .tsigHint {
+        display: block;
+        margin-top: 8px;
+        color: #707070;
+        font-size: 0.75em;
+        }
+</style>
+
+<script type="text/javascript">
+            
+wwr_req_recur("NTRACK;TRACK;BEATPOS",10);
+wwr_start();
+    
+var nTrack = 0, nTrackOld = 0, trackNameAr = [], trackRcvCntAr = [], trackHwOutCntAr = [], receiveIdxAr = [], receiveVolAr = [], receiveMuteAr = [], trackColoursAr = [], trackIsMonitorAr = [], trackIsMonitorArOld = [], selectChoiceIdx = 0, selectChoiceOld = "", mouseDown = 0, sendOutputdB = 0, hardVol = 0;
+    
+function mouseDownEventHandler(msg) {
+    return function(e) {
+        if (typeof e == 'undefined') e=event;
+        if (e.preventDefault) e.preventDefault();
+        wwr_req(msg);
+        return false;
+        }
+    }
+ 
+function mouseUpHandler(event){mouseDown = 0;}
+function mouseDownHandler(event, target){mouseDown = 1;}
+function mouseLeaveHandler(event){mouseDown = 0;}   
+function mouseMoveHandler(event){
+    if (mouseDown != 1){ return; }
+    else {
+        var volTrackWidth = (this.getBoundingClientRect()["width"]);
+        var volThumbWidth = volTrackWidth * 0.14375;
+        var volThumbTrackWidth = (volTrackWidth - volThumbWidth);
+        var volThumbTrackLEdge = this.getBoundingClientRect()["left"];
+        offsetX = (event.pageX - volThumbTrackLEdge - (volThumbWidth / 2));
+
+        if (event.changedTouches != undefined) { //we're doing touch stuff
+            offsetX = (event.changedTouches[0].pageX - volThumbTrackLEdge - (volThumbWidth / 2));
+            }
+        if(offsetX<0){offsetX=0};
+        if(offsetX>volThumbTrackWidth){offsetX=volThumbTrackWidth};
+
+        var volThumb = this.getElementsByClassName("fader")[0];
+        var offsetX320 = offsetX * (320 / volTrackWidth);
+        var vteMove320 = "translate(" + offsetX320 + " 0)";
+        volThumb.setAttributeNS(null, "transform", vteMove320);
+        var volOutput = (offsetX  / volThumbTrackWidth);
+        var volOutputdB = Math.pow(volOutput, 4) * 4;
+        wwr_req("SET/TRACK/" + selectChoiceIdx  + "/SEND/" + -this.id + "/VOL/" + volOutputdB)
+        }
+    }    
+function sendMouseMoveHandler(event){
+    if (mouseDown != 1){ return; }
+    else {
+        var sendTrackWidth = this.getElementsByClassName("sendBg")[0].getBoundingClientRect()["width"];
+        var sendThumbWidth = this.getElementsByClassName("sendBg")[0].getBoundingClientRect()["height"];
+        var sendThumbTrackWidth = (sendTrackWidth - sendThumbWidth);
+        var sendThumbTrackLEdge = this.getElementsByClassName("sendBg")[0].getBoundingClientRect()["left"];
+
+        offsetX = event.pageX - sendThumbTrackLEdge - (sendThumbWidth / 2);
+        if (event.changedTouches != undefined) { //we're doing touch stuff
+            offsetX = (event.changedTouches[0].pageX - sendThumbTrackLEdge - (sendThumbWidth / 2));
+            }
+        if(offsetX<0){offsetX=0};
+        if(offsetX>sendThumbTrackWidth){offsetX=sendThumbTrackWidth};
+
+        var offsetX262 = offsetX * (262 / sendTrackWidth) + 26;
+        var sendThumb = this.getElementsByClassName("sendThumb")[0];
+        sendThumb.setAttributeNS(null, "cx", offsetX262 );
+        var sendLine = this.getElementsByClassName("sendLine")[0];
+        sendLine.setAttributeNS(null, "x2", offsetX262 );
+
+        var sendOutput = (offsetX  / sendThumbTrackWidth);
+        sendOutputdB = Math.pow(sendOutput, 4) * 4;
+        wwr_req("SET/TRACK/" + selectChoiceIdx + "/SEND/" + -this.id + "/VOL/" + sendOutputdB)
+        }
+    }
+    
+function sendMouseUpHandler(event){
+    wwr_req("SET/TRACK/" + selectChoiceIdx + "/SEND/" + -this.id + "/VOL/" + sendOutputdB + "e");
+    mouseDown = 0;
+    }    
+
+function volFaderConect(content, thumb){
+    content.addEventListener("mousemove", mouseMoveHandler, false);
+    content.addEventListener("touchmove", mouseMoveHandler, false);
+    content.addEventListener("mouseleave", mouseLeaveHandler, false);
+    content.addEventListener("mouseup", mouseUpHandler, false);
+    content.addEventListener("touchend", mouseUpHandler, false);
+    thumb.addEventListener("mousedown", function (event) {mouseDownHandler(event, event.srcElement)}, false);
+    thumb.addEventListener('touchstart', function(event){
+        if (event.touches.length > 0) mouseDownHandler(event, event.srcElement);
+        event.preventDefault(); }, false);
+    }    
+    
+function sendConect(content, thumb){
+    content.addEventListener("mousemove", sendMouseMoveHandler, false);
+    content.addEventListener("touchmove", sendMouseMoveHandler, false);
+    content.addEventListener("mouseleave", mouseLeaveHandler, false);
+    content.addEventListener("mouseup", sendMouseUpHandler, false);
+    content.addEventListener("touchend", sendMouseUpHandler, false);
+    thumb.addEventListener("mousedown", function (event) {mouseDownHandler(event, event.srcElement)}, false);
+    thumb.addEventListener('touchstart', function(event){
+        if (event.touches.length > 0) mouseDownHandler(event, event.srcElement);
+        event.preventDefault(); }, false);
+    }    
+    
+function wwr_onreply(results) {
+   var resultsDisplay = document.getElementById("_results");
+    if(resultsDisplay!=null){
+        resultsDisplay.innerHTML = results;
+        } 
+    
+var ar = results.split("\n");
+for (var x=0;x<ar.length;x++) {
+    var tok = ar[x].split("\t");
+    if (tok.length > 0) switch (tok[0]) {
+        case "NTRACK":
+            if (tok.length > 1) {
+                nTrack = parseInt(tok[1])+1;
+                if(nTrack!=nTrackOld){
+                    trackRcvCntAr=[];
+                    nTrackOld=nTrack;
+                    }
+                }
+        break;
+        case "TRACK":
+        idx = parseInt(tok[1]);
+            
+        if(tok[2].trim()!=trackNameAr[idx]){
+            trackNameAr[idx] = tok[2].trim();
+            }
+    
+        if(tok[11]!=trackRcvCntAr[idx]){
+            trackRcvCntAr[idx] = tok[11];
+            }
+    
+        if(tok[12]!=trackHwOutCntAr[idx]){
+            trackHwOutCntAr[idx] = tok[12];
+            }
+            
+        if(tok[13]>0 && tok[13]!=trackColoursAr[idx]){
+            trackColoursAr[idx] = tok[13];
+            }    
+            
+        break;
+            
+        case "SEND":
+            if (tok.length > 3) {
+                var f = -tok[2] - 1;
+                receiveIdxAr[f] = tok[6];
+                receiveVolAr[f] = tok[4];
+                if(tok[6]==-1){hardVol = tok[4]}
+                if(tok[3]&8){receiveMuteAr[f] = 1}
+                else{receiveMuteAr[f] = 0}
+                }
+        break;    
+        }
+    }
+    
+    for(x=0;x<nTrack;x++){ 
+        if((trackHwOutCntAr[x]>0) && (trackRcvCntAr[x]>0)){
+            trackIsMonitorAr[x] = 1;
+            }
+        else {trackIsMonitorAr[x] = 0;}
+        }
+    var trackSelect = document.getElementById("trackSelect");
+    if(trackIsMonitorAr.length>(nTrack+1)){
+        trackIsMonitorAr.pop();
+        for(i=trackSelect.options.length ; i>=1 ; i--){
+                trackSelect.remove(i);
+            }
+        }
+    if(trackIsMonitorArOld.length>nTrack){
+        trackIsMonitorArOld.pop();
+        }
+    
+    for(x=0;x<trackIsMonitorArOld.length;x++){
+        if(trackIsMonitorArOld[x]===undefined){trackIsMonitorArOld[x]=0} //so that first time round doesn't count as 'changed'
+        }
+    function getSum(total, num) {return total + num;}
+    var trackIsMonitorArSum = trackIsMonitorAr.reduce(getSum);
+    if(trackIsMonitorArOld.length>0){var trackIsMonitorArOldSum = trackIsMonitorArOld.reduce(getSum)}
+    if(trackIsMonitorArSum!=trackIsMonitorArOldSum){
+        for(i=trackSelect.options.length ; i>=1 ; i--){
+                trackSelect.remove(i);
+            }
+        }
+    
+    if(trackSelect.options.length==1){
+        for(x=0;x<nTrack;x++){
+            if(trackIsMonitorAr[x]==1){
+                var option = document.createElement("option");
+                option.text = trackNameAr[x];
+                trackSelect.add(option);
+                }
+            trackIsMonitorArOld[x] = trackIsMonitorAr[x];
+            }
+        }
+    
+    var selectChoice = trackSelect.value;
+    if(selectChoice!=selectChoiceOld){
+        selectChoiceIdx = trackNameAr.indexOf(selectChoice);
+        selectChoiceOld = selectChoice;
+        }
+    
+    for(y=1;y<(parseInt(trackRcvCntAr[selectChoiceIdx])+1);y++){ 
+        wwr_req("GET/TRACK/" + selectChoiceIdx + "/SEND/" + (-y)); // requesting receive values of the track being displayed
+       }
+    wwr_req("GET/TRACK/" + selectChoiceIdx + "/SEND/" + 0); // request the first normal send, which should be the hardware send
+    
+    var faderContent = document.getElementsByClassName("trackRow2")[0];
+    var receivesContent = document.getElementById("receives");
+    var instructions = document.getElementById("instructions");
+    var cloneFader = document.getElementById("trackRow2Svg").cloneNode(true);
+    var cloneTrackSend = document.getElementById("trackSendSvg").cloneNode(true);
+    var drawnReceives = trackRcvCntAr[selectChoiceIdx];
+    var drawnReceivesDone = receivesContent.childNodes.length;
+    if (drawnReceives<drawnReceivesDone || drawnReceives==null){
+        if(receivesContent.lastChild){receivesContent.removeChild(receivesContent.lastChild)}
+        }
+    if (drawnReceives>drawnReceivesDone){
+        var sendDiv = document.createElement("div");
+        sendDiv.className = ("sendDiv");
+        receivesContent.appendChild(sendDiv);
+        sendDiv.appendChild(cloneTrackSend);
+        }
+    if (drawnReceives==null && faderContent.innerHTML){
+        faderContent.innerHTML=""
+        instructions.style.display = "block";
+        }
+    if (drawnReceives>=1 && faderContent.innerHTML===""){
+        faderContent.appendChild(cloneFader);
+        instructions.style.display = "none";
+        }
+    
+    
+    
+    //----------------------------------
+    // Now do things based on what's been DRAWN
+    //----------------------------------        
+    
+    var trackRow2Content = document.getElementById("trackRow2Svg");
+    if(trackRow2Content){
+        var volThumb = trackRow2Content.getElementsByClassName("fader")[0];
+            volFaderConect(trackRow2Content,volThumb);
+            volThumb.volSetting = (Math.pow(hardVol, 1/4) * 194.68);
+            if(volThumb.volSetting){
+                var vteMove = "translate(" + volThumb.volSetting + " 0)"
+                if(mouseDown != 1){volThumb.setAttributeNS(null, "transform", vteMove);}
+                }
+        }
+    
+    for(x=0;x<drawnReceivesDone;x++){ //remember not to spam the DOM like a twat
+        var thisChild = receivesContent.childNodes[x];
+        if(thisChild && receiveIdxAr[x] && receiveVolAr[x]){
+            thisChild.id = x+1;
+            thisName = trackNameAr[receiveIdxAr[x]];
+            thisVol = mkvolstr(receiveVolAr[x]);
+            var thisCol = ("#" + (trackColoursAr[receiveIdxAr[x]]|0x1000000).toString(16).substr(-6));
+            if(thisChild){
+                sendTitleText = thisChild.getElementsByClassName("sendTitleText")[0]
+                sDbText = thisChild.getElementsByClassName("sDbText")[0];
+                }
+            if(sendTitleText && sendTitleText.textContent!=thisName)sendTitleText.textContent = thisName;      
+            if(sDbText && sDbText.Content!=thisVol)sDbText.textContent = thisVol;
+            var sendLine = thisChild.getElementsByClassName("sendLine")[0];
+            sSetting = (Math.pow(receiveVolAr[x], 1/4) * 154) + 27;
+            if(mouseDown != 1){sendLine.setAttributeNS(null, "x2", sSetting);}
+            var sendThumb = thisChild.getElementsByClassName("sendThumb")[0];
+            if(mouseDown != 1){sendThumb.setAttributeNS(null, "cx", sSetting);}
+            
+            sendConect(thisChild,sendThumb);
+            
+            var sendThumbColour = thisChild.getAttribute("style")
+            var defaultColour = "#000000";
+            if(thisCol!=defaultColour){
+                if(sendThumbColour!=thisCol){
+                    sendThumb.setAttributeNS(null, "fill", thisCol);
+                    sendTitleText.setAttributeNS(null, "fill", thisCol);
+                    }
+                }
+                else{
+                    sendThumb.setAttributeNS(null, "fill", "#808080");
+                    sendTitleText.setAttributeNS(null, "fill", "#A3A3A3");
+                    }
+            
+            var sendMuteButton = thisChild.getElementsByClassName("send_mute")[0];
+            sendMuteButton.onmousedown = mouseDownEventHandler("SET/TRACK/" + selectChoiceIdx + "/SEND/" + (-x-1) + "/MUTE/-1");
+            var sendMuteOff = thisChild.getElementsByClassName("send_mute_off")[0];
+            var sendMuteOn = thisChild.getElementsByClassName("send_mute_on")[0];
+            if(receiveMuteAr[x]==1){
+                sendMuteOff.style.visibility = "hidden";
+                sendMuteOn.style.visibility = "visible";
+                }
+            else{
+                sendMuteOff.style.visibility = "visible";
+                sendMuteOn.style.visibility = "hidden";
+                }
+            }
+        }
+}
+
+/* ===========================================================
+   Vertical-mode (landscape) support
+   - In landscape: vertical channel strips, side-by-side.
+   - In portrait: original horizontal sliders (unchanged).
+   The CSS @media (orientation: ...) toggles visibility; the JS
+   below populates the #vertMixer container and handles drag.
+   =========================================================== */
+var vertModeMQ = window.matchMedia("(orientation: landscape)");
+
+/* modeOverride: "auto" | "v" | "h"
+   - auto: follow device orientation (default)
+   - v:    force vertical (channel-strip) layout
+   - h:    force horizontal (pill) layout
+   URL hash wins on load (#v / #h), otherwise localStorage. */
+var modeOverride = "auto";
+var MODE_ICONS = {
+    auto: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 16l3.5-9 3.5 9M9.8 13.2h4.4"/></svg>',
+    v:    '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><rect x="5" y="4" width="3" height="16" rx="1"/><rect x="10.5" y="4" width="3" height="16" rx="1"/><rect x="16" y="4" width="3" height="16" rx="1"/></svg>',
+    h:    '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><rect x="4" y="5" width="16" height="3" rx="1"/><rect x="4" y="10.5" width="16" height="3" rx="1"/><rect x="4" y="16" width="16" height="3" rx="1"/></svg>'
+    };
+var MODE_LABELS = { auto: "Auto", v: "Vertical", h: "Horizontal" };
+
+function loadModePreference(){
+    var hash = (window.location.hash || "").toLowerCase();
+    if (hash === "#v") { modeOverride = "v"; return; }
+    if (hash === "#h") { modeOverride = "h"; return; }
+    if (hash === "#auto" || hash === "#a") { modeOverride = "auto"; return; }
+    try {
+        var stored = localStorage.getItem("moremeMode");
+        if (stored === "v" || stored === "h" || stored === "auto") modeOverride = stored;
+        } catch (e) { /* localStorage may be unavailable */ }
+    }
+
+function getEffectiveMode(){
+    if (modeOverride === "v") return true;
+    if (modeOverride === "h") return false;
+    return vertModeMQ.matches;
+    }
+
+var isVertMode = false;  // set by applyMode() below
+
+function updateModeToggleIcon(){
+    var btn = document.getElementById("modeToggle");
+    if (!btn) return;
+    btn.innerHTML = MODE_ICONS[modeOverride] || MODE_ICONS.auto;
+    btn.setAttribute("title", "Layout: " + MODE_LABELS[modeOverride]);
+    }
+
+function applyMode(){
+    isVertMode = getEffectiveMode();
+    document.body.classList.remove("force-vert", "force-horiz");
+    if (modeOverride === "v") document.body.classList.add("force-vert");
+    else if (modeOverride === "h") document.body.classList.add("force-horiz");
+    // Wipe both layouts so the next polling cycle rebuilds whichever is now visible.
+    var trackRow2 = document.getElementsByClassName("trackRow2")[0];
+    var receivesEl = document.getElementById("receives");
+    var vertMixerEl = document.getElementById("vertMixer");
+    if (trackRow2) trackRow2.innerHTML = "";
+    if (receivesEl) receivesEl.innerHTML = "";
+    if (vertMixerEl) vertMixerEl.innerHTML = "";
+    updateModeToggleIcon();
+    }
+
+function cycleMode(){
+    modeOverride = (modeOverride === "auto") ? "v"
+                : (modeOverride === "v")    ? "h"
+                                            : "auto";
+    try { localStorage.setItem("moremeMode", modeOverride); } catch (e) {}
+    applyMode();
+    }
+
+function onOrientationChange(){
+    // Only react if the user hasn't manually pinned a mode.
+    if (modeOverride !== "auto") return;
+    applyMode();
+    }
+if (vertModeMQ.addEventListener) vertModeMQ.addEventListener("change", onOrientationChange);
+else if (vertModeMQ.addListener) vertModeMQ.addListener(onOrientationChange);
+
+// Initial state: read preference and apply ASAP. The DOM may not be ready yet
+// for the toggle button itself, but applyMode is safe to call early (it null-checks).
+loadModePreference();
+isVertMode = getEffectiveMode();
+// Wire the button once DOM is ready.
+function wireModeToggle(){
+    var btn = document.getElementById("modeToggle");
+    if (btn && !btn._wired) {
+        btn._wired = true;
+        btn.addEventListener("click", cycleMode);
+        }
+    // Also apply body class + icon now that DOM exists.
+    applyMode();
+    }
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", wireModeToggle);
+} else {
+    wireModeToggle();
+    }
+
+// SVG-internal coordinates for the vertical slider track:
+//   thumb y at min vol = 195, at max vol = 25  →  travel = 170 units
+// Match the horizontal fader's mapping where 0 dB (vol=1) sits at ~71% of travel:
+//   max-position-svg = 170 / pow(4, 1/4) ≈ 120.2
+var VERT_TRAVEL_SVG = 120.2;
+var VERT_THUMB_BOTTOM_Y = 195;
+
+function vertMouseMoveHandler(event){
+    if (mouseDown != 1) return;
+    var sliderSvg = this;
+    var rect = sliderSvg.getBoundingClientRect();
+    var trackH = rect.height;
+    if (trackH <= 0) return;
+    var thumbH = trackH * 0.14375;
+    var trackEffH = trackH - thumbH;
+    var bottomEdge = rect.bottom;
+
+    var pageY = event.pageY;
+    if (event.changedTouches != undefined) {
+        pageY = event.changedTouches[0].pageY;
+        }
+
+    // offsetY: 0 at bottom (silent), trackEffH at top (loudest)
+    var offsetY = bottomEdge - pageY - (thumbH / 2);
+    if (offsetY < 0) offsetY = 0;
+    if (offsetY > trackEffH) offsetY = trackEffH;
+
+    var volOutput = offsetY / trackEffH;       // 0..1 across the visible track
+    var volOutputdB = Math.pow(volOutput, 4) * 4;  // same curve as horizontal
+    sendOutputdB = volOutputdB;
+
+    // Visual update: map normalised position back into SVG coords.
+    var svgOffset = Math.pow(volOutputdB, 1/4) * VERT_TRAVEL_SVG;
+    var svgY = VERT_THUMB_BOTTOM_Y - svgOffset;
+    var thumbEl = sliderSvg.getElementsByClassName("sendThumb")[0];
+    var lineEl = sliderSvg.getElementsByClassName("sendLine")[0];
+    var faderEl = sliderSvg.getElementsByClassName("fader")[0];
+    if (thumbEl) thumbEl.setAttributeNS(null, "cy", svgY);
+    if (lineEl)  lineEl.setAttributeNS(null, "y2", svgY);
+    if (faderEl) faderEl.setAttributeNS(null, "transform", "translate(0 " + (-svgOffset) + ")");
+
+    var sendIdx = sliderSvg.dataset.sendIdx;
+    wwr_req("SET/TRACK/" + selectChoiceIdx + "/SEND/" + sendIdx + "/VOL/" + volOutputdB);
+    }
+
+function vertMouseUpHandler(event){
+    var sliderSvg = this;
+    var sendIdx = sliderSvg.dataset.sendIdx;
+    // Commit message ("e" suffix) only for receives, matching horizontal behaviour.
+    if (sendIdx !== "0") {
+        wwr_req("SET/TRACK/" + selectChoiceIdx + "/SEND/" + sendIdx + "/VOL/" + sendOutputdB + "e");
+        }
+    mouseDown = 0;
+    }
+
+function vertConnect(svgElement, thumbElement){
+    if (svgElement._vertConnected) return;   // attach once per element
+    svgElement._vertConnected = true;
+    svgElement.addEventListener("mousemove", vertMouseMoveHandler, false);
+    svgElement.addEventListener("touchmove", vertMouseMoveHandler, false);
+    svgElement.addEventListener("mouseleave", mouseLeaveHandler, false);
+    svgElement.addEventListener("mouseup", vertMouseUpHandler, false);
+    svgElement.addEventListener("touchend", vertMouseUpHandler, false);
+    // Allow dragging by grabbing the track (background) too, not just the thumb.
+    var grab = function(e){
+        mouseDownHandler(e, e.srcElement);
+        vertMouseMoveHandler.call(svgElement, e);
+        };
+    svgElement.addEventListener("mousedown", grab, false);
+    svgElement.addEventListener("touchstart", function(e){
+        if (e.touches.length > 0) grab(e);
+        e.preventDefault();
+        }, false);
+    if (thumbElement) {
+        thumbElement.addEventListener("mousedown", function(e){ mouseDownHandler(e, e.srcElement); }, false);
+        thumbElement.addEventListener("touchstart", function(e){
+            if (e.touches.length > 0) mouseDownHandler(e, e.srcElement);
+            e.preventDefault();
+            }, false);
+        }
+    }
+
+function renderVertical(drawnReceives){
+    var vertMixer = document.getElementById("vertMixer");
+    var instructions = document.getElementById("instructions");
+    if (!vertMixer) return;
+
+    if (drawnReceives == null) {
+        if (vertMixer.innerHTML) vertMixer.innerHTML = "";
+        if (instructions) instructions.style.display = "block";
+        return;
+        }
+    if (instructions) instructions.style.display = "none";
+
+    // Ensure master fader strip exists as the leftmost child.
+    if (vertMixer.children.length === 0 ||
+        !vertMixer.firstElementChild.classList.contains("vertMain")) {
+        vertMixer.innerHTML = "";
+        var faderT = document.getElementById("trackRow2SvgVert").cloneNode(true);
+        while (faderT.firstElementChild) vertMixer.appendChild(faderT.firstElementChild);
+        }
+
+    // Reconcile number of receive strips.
+    var existingReceives = vertMixer.children.length - 1; // minus master
+    while (vertMixer.children.length - 1 > drawnReceives) {
+        vertMixer.removeChild(vertMixer.lastElementChild);
+        }
+    while (vertMixer.children.length - 1 < drawnReceives) {
+        var sendT = document.getElementById("trackSendSvgVert").cloneNode(true);
+        while (sendT.firstElementChild) vertMixer.appendChild(sendT.firstElementChild);
+        }
+
+    // ----- Master fader -----
+    var masterChan = vertMixer.firstElementChild;
+    if (masterChan) {
+        var masterSvg = masterChan.querySelector(".vertSlider");
+        var masterThumb = masterChan.querySelector(".vertMainThumb");
+        var masterDb = masterChan.querySelector(".vertDb");
+        if (masterSvg) {
+            masterSvg.dataset.sendIdx = "0";
+            vertConnect(masterSvg, masterThumb);
+            if (typeof hardVol !== "undefined" && mouseDown != 1) {
+                var svgOff = Math.pow(hardVol, 1/4) * VERT_TRAVEL_SVG;
+                var fader = masterChan.querySelector(".fader");
+                if (fader) fader.setAttributeNS(null, "transform", "translate(0 " + (-svgOff) + ")");
+                if (masterDb) masterDb.textContent = mkvolstr(hardVol);
+                }
+            }
+        }
+
+    // ----- Receive strips -----
+    for (var x = 0; x < drawnReceives; x++) {
+        var chanEl = vertMixer.children[x + 1];
+        if (!chanEl) continue;
+        if (receiveIdxAr[x] === undefined || receiveVolAr[x] === undefined) continue;
+
+        var sliderSvg = chanEl.querySelector(".vertSlider");
+        var thumbEl = chanEl.querySelector(".sendThumb");
+        var lineEl = chanEl.querySelector(".sendLine");
+        var titleEl = chanEl.querySelector(".vertTitle");
+        var dbEl = chanEl.querySelector(".vertDb");
+        var muteEl = chanEl.querySelector(".vertMute");
+
+        if (sliderSvg) {
+            sliderSvg.dataset.sendIdx = String(-(x + 1));
+            vertConnect(sliderSvg, thumbEl);
+            }
+
+        var thisName = trackNameAr[receiveIdxAr[x]];
+        var thisVol = mkvolstr(receiveVolAr[x]);
+        var thisCol = "#" + (trackColoursAr[receiveIdxAr[x]] | 0x1000000).toString(16).substr(-6);
+
+        if (titleEl && titleEl.textContent !== thisName) titleEl.textContent = thisName;
+        if (dbEl && dbEl.textContent !== thisVol) dbEl.textContent = thisVol;
+
+        if (thisCol !== "#000000") {
+            if (thumbEl) thumbEl.setAttributeNS(null, "fill", thisCol);
+            if (titleEl) titleEl.style.color = thisCol;
+        } else {
+            if (thumbEl) thumbEl.setAttributeNS(null, "fill", "#808080");
+            if (titleEl) titleEl.style.color = "#A3A3A3";
+            }
+
+        var svgOff = Math.pow(receiveVolAr[x], 1/4) * VERT_TRAVEL_SVG;
+        var svgY = VERT_THUMB_BOTTOM_Y - svgOff;
+        if (mouseDown != 1) {
+            if (thumbEl) thumbEl.setAttributeNS(null, "cy", svgY);
+            if (lineEl) lineEl.setAttributeNS(null, "y2", svgY);
+            }
+
+        if (muteEl) {
+            muteEl.onclick = (function(idx){
+                return function(){
+                    wwr_req("SET/TRACK/" + selectChoiceIdx + "/SEND/" + (-idx) + "/MUTE/-1");
+                    };
+                })(x + 1);
+            if (receiveMuteAr[x] == 1) muteEl.classList.add("muted");
+            else                       muteEl.classList.remove("muted");
+            }
+        }
+    }
+
+/* ===========================================================
+   Project Settings view
+   - "Project Settings" appears as a special option at the bottom
+     of the track dropdown (with a separator above it).
+   - Picking it hides the mixer and shows the settings panel.
+   - Tempo / time-sig are sent to REAPER via the OSC bridge:
+       OSC//tempo/raw:<bpm>
+       OSC//timesig/numerator:<n>
+       OSC//timesig/denominator:<d>
+     These rely on REAPER's Default.ReaperOSC having the standard
+     receive bindings (TEMPO_RAW, TIMESIG_NUMERATOR, TIMESIG_DENOMINATOR).
+   - Time signature is read live from BEATPOS replies. BPM cannot be
+     read from the web remote API, so we display the last-set value
+     (persisted in localStorage).
+   =========================================================== */
+var SETTINGS_OPTION_LABEL = "⚙ Project Settings";
+var SETTINGS_SEPARATOR_LABEL = "──────────";
+var inSettingsView = false;
+var currentTsNum = 4, currentTsDen = 4;
+var lastSentTempo = 120;
+
+function ensureSettingsOption(){
+    var trackSelect = document.getElementById("trackSelect");
+    if (!trackSelect) return;
+    // Walk existing options to see if the Settings option is already there.
+    var hasSettings = false;
+    for (var i = 0; i < trackSelect.options.length; i++) {
+        if (trackSelect.options[i].text === SETTINGS_OPTION_LABEL) {
+            hasSettings = true;
+            break;
+            }
+        }
+    if (hasSettings) return;
+    // Only add once the dropdown has been populated with at least one
+    // real monitor track entry (i.e. more than just the placeholder).
+    if (trackSelect.options.length <= 1) return;
+    var sep = document.createElement("option");
+    sep.text = SETTINGS_SEPARATOR_LABEL;
+    sep.disabled = true;
+    trackSelect.add(sep);
+    var settingsOpt = document.createElement("option");
+    settingsOpt.text = SETTINGS_OPTION_LABEL;
+    trackSelect.add(settingsOpt);
+    }
+
+function updateSettingsView(){
+    var trackSelect = document.getElementById("trackSelect");
+    if (!trackSelect) return;
+
+    // If we believe we're in Settings view but the dropdown lost the
+    // selection (this happens when the dropdown gets rebuilt because
+    // monitor-track count changed), restore the Settings selection so
+    // the user doesn't get kicked out. Distinguish "rebuild" from "user
+    // explicitly picked something else" by checking selectedIndex: after
+    // a rebuild the selectedIndex resets to 0 (the italic placeholder);
+    // an explicit pick produces a non-zero selectedIndex.
+    if (inSettingsView
+        && trackSelect.value !== SETTINGS_OPTION_LABEL
+        && trackSelect.selectedIndex === 0) {
+        for (var i = 0; i < trackSelect.options.length; i++) {
+            if (trackSelect.options[i].text === SETTINGS_OPTION_LABEL) {
+                trackSelect.value = SETTINGS_OPTION_LABEL;
+                selectChoiceOld = SETTINGS_OPTION_LABEL; // keep originals in sync
+                return;
+                }
+            }
+        }
+
+    var picked = trackSelect.value;
+    var wantsSettings = (picked === SETTINGS_OPTION_LABEL);
+    if (wantsSettings !== inSettingsView) {
+        inSettingsView = wantsSettings;
+        document.body.classList.toggle("in-settings", inSettingsView);
+        if (inSettingsView) {
+            setupSettingsHandlers();
+            // Request a fresh BEATPOS immediately so time-sig fields show
+            // the real project values right away rather than waiting for
+            // the next polling tick. Also probe ExtState for the
+            // auto-registered tsig action ID and the live tempo (if the
+            // optional monitor script is running).
+            wwr_req("BEATPOS;GET/EXTSTATE/MoreMe/tsig_action_id;GET/EXTSTATE/MoreMe/current_tempo");
+            // Recurring poll for live tempo (only while Settings is open).
+            wwr_req_recur("GET/EXTSTATE/MoreMe/current_tempo", 250);
+            }
+        else {
+            // Tempo isn't visible outside Settings; stop polling for it.
+            wwr_req_recur_cancel("GET/EXTSTATE/MoreMe/current_tempo");
+            }
+        }
+    }
+
+function setupSettingsHandlers(){
+    var tempoInput = document.getElementById("tempoInput");
+    var tsigNum = document.getElementById("tsigNum");
+    var tsigDen = document.getElementById("tsigDen");
+    if (!tempoInput || !tsigNum || !tsigDen) return;
+
+    // Populate tempo input from last-saved value on first open.
+    if (!tempoInput._initialised) {
+        tempoInput._initialised = true;
+        try {
+            var saved = localStorage.getItem("moremeTempo");
+            if (saved && !isNaN(parseFloat(saved))) {
+                tempoInput.value = parseFloat(saved);
+                lastSentTempo = parseFloat(saved);
+                }
+            } catch (e) {}
+        }
+
+    // Wire +/- buttons once.
+    var btns = document.querySelectorAll("#settingsPanel .tempoBtn");
+    for (var i = 0; i < btns.length; i++) {
+        var btn = btns[i];
+        if (btn._wired) continue;
+        btn._wired = true;
+        btn.addEventListener("click", (function(b){
+            return function(){
+                var delta = parseFloat(b.getAttribute("data-delta"));
+                var cur = parseFloat(tempoInput.value);
+                if (isNaN(cur)) cur = 120;
+                var next = Math.max(20, Math.min(500, cur + delta));
+                next = Math.round(next * 10) / 10;
+                tempoInput.value = next;
+                sendTempo(next);
+                };
+            })(btn));
+        }
+
+    // Direct typing into tempo field commits on blur / Enter.
+    if (!tempoInput._wired) {
+        tempoInput._wired = true;
+        tempoInput.addEventListener("change", function(){
+            var v = parseFloat(tempoInput.value);
+            if (isNaN(v)) return;
+            v = Math.max(20, Math.min(500, v));
+            v = Math.round(v * 10) / 10;
+            tempoInput.value = v;
+            sendTempo(v);
+            });
+        }
+
+    // Time-sig handlers.
+    if (!tsigNum._wired) {
+        tsigNum._wired = true;
+        tsigNum.addEventListener("change", function(){
+            var n = parseInt(tsigNum.value, 10);
+            if (isNaN(n) || n < 1 || n > 32) {
+                tsigNum.value = currentTsNum;
+                return;
+                }
+            applyTsigToReaper();
+            });
+        }
+    if (!tsigDen._wired) {
+        tsigDen._wired = true;
+        tsigDen.addEventListener("change", function(){
+            var d = parseInt(tsigDen.value, 10);
+            if (isNaN(d)) return;
+            applyTsigToReaper();
+            });
+        }
+
+    // Time-sig script ID input (one-time setup).
+    var scriptInput = document.getElementById("tsigScriptId");
+    var setupDetails = document.getElementById("tsigSetup");
+    if (scriptInput && !scriptInput._wired) {
+        scriptInput._wired = true;
+        scriptInput.value = getTsigScriptId();
+        scriptInput.addEventListener("change", function(){
+            var v = (scriptInput.value || "").trim();
+            try { localStorage.setItem("moremeTsigScriptId", v); } catch (e) {}
+            updateTsigStatus();
+            });
+        // Auto-expand the setup section if no ID is configured yet.
+        if (setupDetails && !getTsigScriptId()) {
+            setupDetails.open = true;
+            }
+        }
+    updateTsigStatus();
+    }
+
+function sendTempo(bpm){
+    lastSentTempo = bpm;
+    wwr_req("OSC/tempo/raw:" + bpm);
+    try { localStorage.setItem("moremeTempo", String(bpm)); } catch (e) {}
+    }
+/* Time signature can't be set via OSC (REAPER has no built-in alias for it),
+   so we go through a custom ReaScript that the user installs once. We write
+   the desired num/den to project extstate, then trigger the script. Both
+   commands are chained in a single request so the script always sees a
+   matching pair. */
+function getTsigScriptId(){
+    try { return localStorage.getItem("moremeTsigScriptId") || ""; }
+    catch (e) { return ""; }
+    }
+function applyTsigToReaper(){
+    var numEl = document.getElementById("tsigNum");
+    var denEl = document.getElementById("tsigDen");
+    if (!numEl || !denEl) return;
+    var n = parseInt(numEl.value, 10);
+    var d = parseInt(denEl.value, 10);
+    if (isNaN(n) || isNaN(d) || n < 1 || d < 1) return;
+    var scriptId = getTsigScriptId();
+    if (!scriptId) {
+        updateTsigStatus();  // re-render warning
+        return;
+        }
+    // SET/PROJEXTSTATE/section/key/value — section and key are urlencoded.
+    var cmd = "SET/PROJEXTSTATE/MoreMe/tsig_num/" + n
+            + ";SET/PROJEXTSTATE/MoreMe/tsig_den/" + d
+            + ";" + scriptId;
+    wwr_req(cmd);
+    }
+function updateTsigStatus(){
+    var status = document.getElementById("tsigStatus");
+    if (!status) return;
+    var scriptId = getTsigScriptId();
+    if (scriptId) {
+        status.textContent = "✓ Script configured (" + scriptId.substring(0, 10) + "…)";
+        status.style.color = "#6c8";
+        }
+    else {
+        status.textContent = "⚠ Setup required — expand below";
+        status.style.color = "#c96";
+        }
+    }
+// Kept for backwards-compat with earlier signatures; both now route through
+// applyTsigToReaper so the script always gets a matched num/den pair.
+function sendTimesigNumerator(n){ applyTsigToReaper(); }
+function sendTimesigDenominator(d){ applyTsigToReaper(); }
+
+function parseExtStateFromResults(results){
+    // EXTSTATE \t section \t key \t string
+    // Watch for MoreMe/tsig_action_id which is written by moreme_set_timesig.lua
+    // when it self-registers. Save to localStorage so future page loads have it.
+    var lines = results.split("\n");
+    for (var i = 0; i < lines.length; i++) {
+        var tok = lines[i].split("\t");
+        if (tok[0] !== "EXTSTATE" || tok.length < 4) continue;
+        if (tok[1] === "MoreMe" && tok[2] === "tsig_action_id") {
+            var id = (tok[3] || "").trim();
+            if (id) {
+                var existing = "";
+                try { existing = localStorage.getItem("moremeTsigScriptId") || ""; } catch (e) {}
+                if (existing !== id) {
+                    try { localStorage.setItem("moremeTsigScriptId", id); } catch (e) {}
+                    // Sync the visible input field if the user is currently looking at it.
+                    var scriptInput = document.getElementById("tsigScriptId");
+                    if (scriptInput) scriptInput.value = id;
+                    updateTsigStatus();
+                    }
+                }
+            }
+        // Live tempo update from moreme_monitor.lua (optional companion).
+        else if (tok[1] === "MoreMe" && tok[2] === "current_tempo") {
+            var raw = (tok[3] || "").trim();
+            var bpm = parseFloat(raw);
+            if (!isNaN(bpm) && bpm > 0) {
+                var tempoInput = document.getElementById("tempoInput");
+                if (tempoInput && document.activeElement !== tempoInput) {
+                    // Round to 1 decimal to match the +/-0.1 button granularity.
+                    var rounded = Math.round(bpm * 10) / 10;
+                    if (parseFloat(tempoInput.value) !== rounded) {
+                        tempoInput.value = rounded;
+                        }
+                    }
+                lastSentTempo = bpm;
+                }
+            }
+        }
+    }
+
+function parseBeatPosFromResults(results){
+    // Pull ts_numerator and ts_denominator out of a BEATPOS line in the reply.
+    // BEATPOS \t playstate \t pos_secs \t full_beat_pos \t measure_cnt \t beats_in_measure \t ts_num \t ts_den
+    var lines = results.split("\n");
+    for (var i = 0; i < lines.length; i++) {
+        var tok = lines[i].split("\t");
+        if (tok[0] !== "BEATPOS" || tok.length < 8) continue;
+        var n = parseInt(tok[6], 10);
+        var d = parseInt(tok[7], 10);
+        if (!isNaN(n)) currentTsNum = n;
+        if (!isNaN(d)) currentTsDen = d;
+        // Update visible inputs unless user is currently editing them.
+        var tsigNum = document.getElementById("tsigNum");
+        var tsigDen = document.getElementById("tsigDen");
+        if (tsigNum && document.activeElement !== tsigNum) {
+            if (parseInt(tsigNum.value, 10) !== currentTsNum) tsigNum.value = currentTsNum;
+            }
+        if (tsigDen && document.activeElement !== tsigDen) {
+            if (parseInt(tsigDen.value, 10) !== currentTsDen) {
+                // Only update if the value exists in the dropdown's options.
+                for (var j = 0; j < tsigDen.options.length; j++) {
+                    if (parseInt(tsigDen.options[j].value, 10) === currentTsDen) {
+                        tsigDen.value = String(currentTsDen);
+                        break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+// Hook into the existing polling reply.
+var _origOnReply = wwr_onreply;
+wwr_onreply = function(results){
+    _origOnReply(results);
+    parseBeatPosFromResults(results);
+    parseExtStateFromResults(results);
+    ensureSettingsOption();
+    updateSettingsView();
+    if (isVertMode && !inSettingsView) {
+        renderVertical(trackRcvCntAr[selectChoiceIdx]);
+        }
+    };
+
+function init(){
+  if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream) {
+    for (let l = 0; l < document.styleSheets.length; l ++) {
+      let ss = document.styleSheets[l];
+      if (ss.cssRules) for (let i=0; i < ss.cssRules.length; i++){
+        let st = ss.cssRules[i].selectorText;
+        if (st != undefined && st.startsWith(".button")) ss.removeRule(i--);
+      }
+    }
+  }
+}
+</script>
+</head>
+<body>
+
+<div id="appContainer">
+
+<div id="colWrap"></div>
+<div id="trackSelectRow">
+    <select id="trackSelect">
+        <option>Select your monitor track...</option>
+    </select>
+    <button id="modeToggle" type="button" aria-label="Layout mode" title="Layout: Auto"></button>
+</div>
+
+<div id="instructions">
+Each performer requires their own monitor track to be created in REAPER. <br><br>
+Set it to receive sends from all the tracks you want to monitor.<br><br>
+Give it a hardware send to the performer's output in its first send slot.<br><br>
+Don't forget - you'll probably want to disable its Master Send.<br><br>
+</div>
+
+<div class="trackRow2"></div>
+
+<div id="receives"></div>
+
+<!-- Vertical (landscape) mixer goes here; populated by JS. -->
+<div id="vertMixer"></div>
+
+<!-- Project Settings panel (shown when "Project Settings" picked in dropdown). -->
+<div id="settingsPanel">
+    <h2>PROJECT SETTINGS</h2>
+    <div class="settingField">
+        <span class="settingLabel">Tempo (BPM)</span>
+        <div class="tempoCtrl">
+            <button class="tempoBtn" data-delta="-1" type="button">&minus;1</button>
+            <button class="tempoBtn" data-delta="-0.1" type="button">&minus;0.1</button>
+            <input id="tempoInput" type="number" step="0.1" min="20" max="500" value="120">
+            <button class="tempoBtn" data-delta="0.1" type="button">+0.1</button>
+            <button class="tempoBtn" data-delta="1" type="button">+1</button>
+        </div>
+    </div>
+    <div class="settingField">
+        <span class="settingLabel">Time Signature</span>
+        <div class="tsigCtrl">
+            <input id="tsigNum" type="number" min="1" max="32" value="4">
+            <span class="tsigSep">/</span>
+            <select id="tsigDen">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="4" selected>4</option>
+                <option value="8">8</option>
+                <option value="16">16</option>
+                <option value="32">32</option>
+            </select>
+        </div>
+        <span id="tsigStatus" class="tsigHint">&nbsp;</span>
+    </div>
+    <details id="tsigSetup" style="text-align:left; margin-bottom:24px; color:#A3A3A3; font-size:0.85em">
+        <summary style="cursor:pointer; color:#A9ABAB; text-align:center">Time-sig setup &amp; help</summary>
+        <div style="padding:12px 8px; line-height:1.5">
+            <p style="margin:0 0 8px 0">REAPER's OSC bridge has no time-signature alias, so we set it via a tiny ReaScript. <strong>One-time setup:</strong></p>
+            <ol style="padding-left:24px; margin:0 0 12px 0">
+                <li>In REAPER: <em>Actions</em> menu &rarr; <em>Show action list</em>.</li>
+                <li>Click <em>New action&hellip;</em> &rarr; <em>Load ReaScript&hellip;</em>.</li>
+                <li>Pick <code>moreme_set_timesig.lua</code> from your REAPER folder.</li>
+                <li>Find <em>Script: moreme_set_timesig.lua</em> in the list and <strong>run it once</strong> (double-click, or highlight + click <em>Run</em>).</li>
+            </ol>
+            <p style="margin:0 0 12px 0">That's it &mdash; the page picks up the script's ID automatically on the next poll. The status above the &ldquo;Time-sig setup&rdquo; toggle will flip to a green &check; within a second.</p>
+            <p style="margin:0 0 8px 0; color:#707070">Fallback: if auto-discovery doesn't work, paste the command ID manually. Right-click the script in the Action List &rarr; <em>Copy selected action command ID</em>, then paste here:</p>
+            <input id="tsigScriptId" type="text" placeholder="_RS..." style="width:100%; box-sizing:border-box; background:#262626; color:#E0E0E0; border:1px solid #1A1A1A; border-radius:8px; height:36px; padding:0 10px; font-family:monospace; font-size:0.85em">
+        </div>
+    </details>
+</div>
+
+</div><!-- /#appContainer -->
+
+<div id="backLoad" style="display:none">
+   
+    <element id=trackRow2Svg>  
+        <svg version="1.1" class="faderSvg" display="block" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="100%" height="100%" viewBox="0 1 320 47" xml:space="preserve">
+        <rect x="0" fill="#333333" width="320" height="36"/>
+        <rect id="fader_track" x="23" y="16.7" transform="matrix(-1 -1.224647e-16 1.224647e-16 -1 320 37.3333)" opacity="0.5" fill="#1A1A1A" width="274" height="4"/>
+        <g class="fader">
+            <g>
+                    <linearGradient id="fGrad1" gradientUnits="userSpaceOnUse" x1="245.0833" y1="-114.0833" x2="245.0833" y2="-106.0833" gradientTransform="matrix(6.123234e-17 -1 -1 -6.123234e-17 -68.0833 263.0833)">
+                    <stop  offset="0" style="stop-color:#212121"/>
+                    <stop  offset="1" style="stop-color:#949494"/>
+                </linearGradient>
+                <rect x="38" y="0.5" fill="url(#fGrad1)" width="8" height="35"/>
+
+                    <linearGradient id="fGrad2" gradientUnits="userSpaceOnUse" x1="245.0833" y1="-106.0833" x2="245.0833" y2="-92.0833" gradientTransform="matrix(6.123234e-17 -1 -1 -6.123234e-17 -68.0833 263.0833)">
+                    <stop  offset="0" style="stop-color:#FFFFFF"/>
+                    <stop  offset="0.9991" style="stop-color:#7A7A7A"/>
+                </linearGradient>
+                <path fill="url(#fGrad2)" d="M26,0.5h12v35H26c-1.1,0-2-0.9-2-2v-31C24,1.4,24.9,0.5,26,0.5z"/>
+
+                    <linearGradient id="fGrad3" gradientUnits="userSpaceOnUse" x1="245.0833" y1="-91.0833" x2="245.0833" y2="-77.0833" gradientTransform="matrix(6.123234e-17 -1 -1 -6.123234e-17 -68.0833 263.0833)">
+
+                    <stop  offset="0" style="stop-color:#9C9C9C"/>
+                    <stop  offset="1" style="stop-color:#4D4D4D"/>
+                </linearGradient>
+                <path fill="url(#fGrad3)" d="M21,35.5c1.1,0,2-0.9,2-2v-31c0-1.1-0.9-2-2-2H9v35H21z"/>
+
+                    <linearGradient id="fGrad4" gradientUnits="userSpaceOnUse" x1="245.0833" y1="-77.0833" x2="245.0833" y2="-69.0833" gradientTransform="matrix(6.123234e-17 -1 -1 -6.123234e-17 -68.0833 263.0833)">
+                    <stop  offset="0" style="stop-color:#FFFFFF"/>
+                    <stop  offset="0.1231" style="stop-color:#F2F2F2"/>
+                    <stop  offset="0.3517" style="stop-color:#CFCFCF"/>
+                    <stop  offset="0.6607" style="stop-color:#979797"/>
+                    <stop  offset="1" style="stop-color:#525252"/>
+                </linearGradient>
+                <rect x="1" y="0.5" fill="url(#fGrad4)" width="8" height="35"/>
+            </g>
+            <path id="outline_1_" d="M1,0.5h20c1.1,0,2,0.9,2,2v31c0,1.1-0.9,2-2,2H1V0.5 M24,2.5c0-1.1,0.9-2,2-2h20v35H26c-1.1,0-2-0.9-2-2
+                V2.5 M0.5,0v36H21c1.4,0,2.5-1.1,2.5-2.5c0,1.4,1.1,2.5,2.5,2.5h20.5V0H26c-1.4,0-2.5,1.1-2.5,2.5C23.5,1.1,22.4,0,21,0H0.5L0.5,0z
+                "/>
+            <path opacity="0.1" fill="#FFFFFF" d="M2,1.5h19c0.6,0,1,0.4,1,1v31c0,0.6-0.4,1-1,1H2V1.5 M25,2.5
+                c0-0.6,0.4-1,1-1h19v33H26c-0.6,0-1-0.4-1-1V2.5 M1,0.5v35h20c1.1,0,2-0.9,2-2v-31c0-1.1-0.9-2-2-2H1L1,0.5z M24,2.5v31
+                c0,1.1,0.9,2,2,2h20v-35H26C24.9,0.5,24,1.4,24,2.5L24,2.5z"/>
+
+                <linearGradient id="fGrad5" gradientUnits="userSpaceOnUse" x1="245.0833" y1="-1061.0476" x2="245.0833" y2="-1058.0729" gradientTransform="matrix(6.123234e-17 -1 -1 -6.123234e-17 -1034.0834 263.0833)">
+                <stop  offset="0" style="stop-color:#FFFFFF;stop-opacity:0"/>
+                <stop  offset="0.5" style="stop-color:#FFFFFF"/>
+            </linearGradient>
+            <path opacity="0.33" fill="url(#fGrad5)" d="M26,35.5h1v-1h-1c-0.6,0-1-0.4-1-1v-31c0-0.6,0.4-1,1-1
+                h1v-1h-1c-1,0-1.8,0.7-2,1.6v31.8C24.2,34.8,25,35.5,26,35.5z"/>
+        </g>
+        </svg>  
+    </element>
+   
+    <element id=trackSendSvg>    
+        <svg version="1.1"  display="block" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="100%"
+             height="100%" viewBox="0 0 320 48" xml:space="preserve">
+        <rect class="sendPanelBg" fill="#333333" width="320" height="49"/>
+        <path class="sendBg" fill="#262626" d="M244,0c-0.3,0-0.7,0-1,0v0H142h-17H27v0c-0.3,0-0.7,0-1,0C13.8,0,4,9.8,4,22s9.8,22,22,22
+            c0.3,0,0.7,0,1,0v0h98h17h101v0c0.3,0,0.7,0,1,0c12.2,0,22-9.8,22-22S256.2,0,244,0z"/>
+        <line class="sendLine" style="pointer-events:none" fill="none" opacity="0.5" stroke="#404040"  stroke-width="38" stroke-linecap="round" stroke-miterlimit="10" x1="27" y1="22" x2="130" y2="22"/>
+        <text class="sendTitleText" style="pointer-events:none" transform="matrix(1 0 0 1 25 29)" fill="#A3A3A3" font-family="'Open Sans'" font-size="19px">Target Name</text>
+        <text class="sDbText" style="pointer-events:none" text-anchor="end" transform="matrix(1 0 0 1 250 27)" fill="#A3A3A3" font-family="'Open Sans'" font-size="12px">xx dB</text>
+        <circle class="sendThumb" opacity="0.5" fill="#808080" stroke="#262626" stroke-width="2" stroke-miterlimit="10" cx="26" cy="22" r="19"/>
+
+            <g class="send_mute button">
+                <g class="send_mute_off" visibility="visible">
+                    <path class="shadow" opacity="0.15" d="M314.4,45.2c0,1-0.8,1.8-1.8,1.8h-39c-1,0-1.8-0.8-1.8-1.8
+                        v-4.6h42.7v4.6H314.4z"/>
+                        <linearGradient id="smoGrad" gradientUnits="userSpaceOnUse" x1="1720.0585" y1="-785.3847" x2="1720.0585" y2="-828.6583" gradientTransform="matrix(1 0 0 -1 -1427 -785)">
+                        <stop  offset="0" style="stop-color:#404040"/>
+                        <stop  offset="1" style="stop-color:#333333"/>
+                    </linearGradient>
+                    <path fill="url(#smoGrad)" d="M273.6,43.6c-1.2,0-2.1-1-2.1-2.1v-39c0-1.2,1-2.1,2.1-2.1h39c1.2,0,2.1,1,2.1,2.1v39
+                        c0,1.2-1,2.1-2.1,2.1H273.6z"/>
+                    <g>
+                        <path fill="#805240" d="M293.1,25.9L293.1,25.9l4.2-10h2.2v12.3h-1.8V19h-0.1l-3.9,9.1h-1.2l-4-9.5h-0.1v9.5h-1.8V15.9h2.3
+                            L293.1,25.9z"/>
+                    </g>
+                    <path class="mouseover" visibility="hidden" opacity="0.05" fill="#FFFFFF" d="M273.6,43.6c-1.2,0-2.1-1-2.1-2.1v-39 c0-1.2,1-2.1,2.1-2.1h39c1.2,0,2.1,1,2.1,2.1v39c0,1.2-1,2.1-2.1,2.1H273.6z"/>
+                </g>
+                <g class="send_mute_on" visibility="hidden">
+                    <path display="inline" fill="#F13F24" d="M273.6,43.6c-1.2,0-2.1-1-2.1-2.1v-39c0-1.2,1-2.1,2.1-2.1h39c1.2,0,2.1,1,2.1,2.1v39
+                        c0,1.2-1,2.1-2.1,2.1H273.6z"/>
+                    <g display="inline">
+                        <path fill="#FFFFFF" d="M293.1,25.9L293.1,25.9l4.2-10h2.2v12.3h-1.8V19h-0.1l-3.9,9.1h-1.2l-4-9.5h-0.1v9.5h-1.8V15.9h2.3
+                            L293.1,25.9z"/>
+                    </g>
+                    <path class="mouseover" visibility="hidden" opacity="0" fill="#FFFFFF" d="M273.6,43.6 c-1.2,0-2.1-1-2.1-2.1v-39c0-1.2,1-2.1,2.1-2.1h39c1.2,0,2.1,1,2.1,2.1v39c0,1.2-1,2.1-2.1,2.1H273.6z"/>
+                </g>
+                <path fill="#1A1A1A" d="M312.6,0.7c1,0,1.8,0.8,1.8,1.8v39c0,1-0.8,1.8-1.8,1.8h-39c-1,0-1.8-0.8-1.8-1.8v-39
+                    c0-1,0.8-1.8,1.8-1.8H312.6 M312.6,0.1h-39c-1.3,0-2.4,1.1-2.4,2.4v39c0,1.3,1.1,2.4,2.4,2.4h39c1.3,0,2.4-1.1,2.4-2.4v-39
+                    C315,1.2,313.9,0.1,312.6,0.1L312.6,0.1z"/>
+            </g>
+        </svg>            
+    </element>
+
+    <!-- ===== Vertical (landscape) templates ===== -->
+    <element id="trackRow2SvgVert">
+        <div class="vertChan vertMain">
+            <div class="vertDb">&mdash; dB</div>
+            <svg version="1.1" class="vertSlider faderSvgVert" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 240" preserveAspectRatio="none">
+                <rect fill="#1A1A1A" x="27" y="22" width="6" height="196" rx="2"/>
+                <g class="fader">
+                    <linearGradient id="vfg_cap" gradientUnits="userSpaceOnUse" x1="6" y1="0" x2="54" y2="0">
+                        <stop offset="0" style="stop-color:#525252"/>
+                        <stop offset="0.5" style="stop-color:#E0E0E0"/>
+                        <stop offset="1" style="stop-color:#525252"/>
+                    </linearGradient>
+                    <rect class="vertMainThumb" x="8" y="195" width="44" height="30" rx="3" fill="url(#vfg_cap)" stroke="#1A1A1A" stroke-width="1"/>
+                    <line x1="14" y1="210" x2="46" y2="210" stroke="#262626" stroke-width="2"/>
+                </g>
+            </svg>
+            <div class="vertControls" style="visibility:hidden">
+                <button class="vertMute">M</button>
+            </div>
+            <div class="vertTitle">MAIN</div>
+        </div>
+    </element>
+
+    <element id="trackSendSvgVert">
+        <div class="vertChan">
+            <div class="vertDb">&mdash; dB</div>
+            <svg version="1.1" class="vertSlider sendSvgVert" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 220" preserveAspectRatio="none">
+                <rect class="sendBg" fill="#262626" x="2" y="2" width="46" height="216" rx="23"/>
+                <line class="sendLine" style="pointer-events:none" fill="none" opacity="0.5" stroke="#404040" stroke-width="36" stroke-linecap="round" stroke-miterlimit="10" x1="25" y1="195" x2="25" y2="195"/>
+                <circle class="sendThumb" opacity="0.6" fill="#808080" stroke="#262626" stroke-width="2" stroke-miterlimit="10" cx="25" cy="195" r="18"/>
+            </svg>
+            <div class="vertControls">
+                <button class="vertMute">M</button>
+            </div>
+            <div class="vertTitle">Target Name</div>
+        </div>
+    </element>
+</div>
+
+</body>
+</html>
+
+
+<!--TO DO : change colours when colours change to default -->
