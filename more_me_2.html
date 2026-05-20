@@ -149,7 +149,7 @@
         min-width: 0;
         margin: 0;
         }
-    #modeToggle {
+    #mixerModeBtn {
         flex: 0 0 auto;
         width: 56px;
         background-color: #262626;
@@ -161,15 +161,44 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        font-size: 0.8em;
+        font-weight: 600;
+        letter-spacing: 0.05em;
         -webkit-appearance: none;
         outline: none;
         }
-    #modeToggle:active {
-        background-color: #1A1A1A;
+    #mixerModeBtn:active { background-color: #1A1A1A; }
+    #mixerModeBtn.pan-active {
+        background-color: #1E3A2A;
+        color: #6FD19A;
         }
+    body.in-settings #mixerModeBtn,
+    body.in-gen-settings #mixerModeBtn { display: none !important; }
+    /* Layout toggle inside Settings panel */
+    #layoutToggleRow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-top: 8px;
+        }
+    #modeToggle {
+        background-color: #262626;
+        color: #A9ABAB;
+        border: none;
+        border-radius: 16px;
+        cursor: pointer;
+        padding: 6px 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-appearance: none;
+        outline: none;
+        }
+    #modeToggle:active { background-color: #1A1A1A; }
     #modeToggle svg {
-        width: 26px;
-        height: 26px;
+        width: 22px;
+        height: 22px;
         display: block;
         }
 
@@ -228,23 +257,26 @@
         padding: 8px 16px 24px 16px;
         }
 
-    /* ===== Project Settings panel ===== */
-    #settingsPanel {
+    /* ===== Settings panels (Project + General) ===== */
+    #settingsPanel, #genSettingsPanel {
         display: none;
         padding: 16px;
         text-align: center;
         }
     body.in-settings #settingsPanel { display: block; }
-    /* Hide mixer + instructions while in settings view (wins over all
-       orientation and force-mode rules via !important since those each
-       have specificity 1,1,1 and varying source order). */
+    body.in-gen-settings #genSettingsPanel { display: block; }
+    /* Hide mixer + instructions while any settings panel is open. */
     body.in-settings .trackRow2,
     body.in-settings #receives,
     body.in-settings #vertMixer,
-    body.in-settings #instructions {
+    body.in-settings #instructions,
+    body.in-gen-settings .trackRow2,
+    body.in-gen-settings #receives,
+    body.in-gen-settings #vertMixer,
+    body.in-gen-settings #instructions {
         display: none !important;
         }
-    #settingsPanel h2 {
+    #settingsPanel h2, #genSettingsPanel h2 {
         font-size: 1.1em;
         color: #D0D0D0;
         margin: 0 0 20px 0;
@@ -329,8 +361,47 @@
 wwr_req_recur("NTRACK;TRACK;BEATPOS",10);
 wwr_start();
     
-var nTrack = 0, nTrackOld = 0, trackNameAr = [], trackRcvCntAr = [], trackHwOutCntAr = [], receiveIdxAr = [], receiveVolAr = [], receiveMuteAr = [], trackColoursAr = [], trackIsMonitorAr = [], trackIsMonitorArOld = [], selectChoiceIdx = 0, selectChoiceOld = "", mouseDown = 0, sendOutputdB = 0, hardVol = 0;
-    
+var nTrack = 0, nTrackOld = 0, trackNameAr = [], trackRcvCntAr = [], trackHwOutCntAr = [], receiveIdxAr = [], receiveVolAr = [], receivePanAr = [], receiveMuteAr = [], trackColoursAr = [], trackIsMonitorAr = [], trackIsMonitorArOld = [], selectChoiceIdx = 0, selectChoiceOld = "", mouseDown = 0, sendOutputdB = 0, sendOutputPan = 0, hardVol = 0;
+
+// Horizontal pan: thumb travels cx ∈ [26, 244] in SVG units (sendBg pill is 262
+// wide, but the thumb center can't reach the edges — it stops one thumb-radius
+// in). Center = 135, half-range = 109. These must match what the drag math in
+// sendMouseMoveHandler produces, otherwise touchend causes a visible jump.
+var HORIZ_PAN_CENTER_X = 135;
+var HORIZ_PAN_HALF     = 109;
+var VERT_PAN_CENTER_Y  = 110;  // SVG y at pan=0: (195+25)/2
+var VERT_PAN_HALF      = 85;   // 195-110 = 110-25
+
+var mixerMode = "mix"; // "mix" | "pan" — global toggle, applies to all strips
+
+function panToStr(pan) {
+    var p = Math.max(-1, Math.min(1, pan || 0));
+    if (Math.abs(p) < 0.01) return "CTR";
+    return (p < 0 ? "L" : "R") + Math.round(Math.abs(p) * 100);
+    }
+
+// Double-tap-to-center: in pan mode, two taps on the same strip within 350 ms
+// snap that strip's pan to 0. Callers pass a stripKey unique per strip + the
+// REAPER send index (negative for receives, positive for hardware sends), and
+// an `onCenter` that updates the strip's visual thumb/line/readout immediately.
+var lastTapTime = 0, lastTapKey = "";
+function detectPanDoubleTap(stripKey, sendIdx, onCenter) {
+    if (mixerMode !== "pan") { lastTapTime = 0; lastTapKey = ""; return; }
+    if (sendIdx === 0 || sendIdx === "0") return;  // master strip has no pan
+    var now = Date.now();
+    if (lastTapKey === stripKey && (now - lastTapTime) < 350) {
+        sendOutputPan = 0;
+        wwr_req("SET/TRACK/" + selectChoiceIdx + "/SEND/" + sendIdx + "/PAN/0");
+        if (typeof onCenter === "function") onCenter();
+        lastTapTime = 0;
+        lastTapKey = "";
+        } else {
+        lastTapTime = now;
+        lastTapKey = stripKey;
+        }
+    }
+
+
 function mouseDownEventHandler(msg) {
     return function(e) {
         if (typeof e == 'undefined') e=event;
@@ -384,20 +455,33 @@ function sendMouseMoveHandler(event){
 
         var offsetX262 = offsetX * (262 / sendTrackWidth) + 26;
         var sendThumb = this.getElementsByClassName("sendThumb")[0];
-        sendThumb.setAttributeNS(null, "cx", offsetX262 );
+        sendThumb.setAttributeNS(null, "cx", offsetX262);
         var sendLine = this.getElementsByClassName("sendLine")[0];
-        sendLine.setAttributeNS(null, "x2", offsetX262 );
 
-        var sendOutput = (offsetX  / sendThumbTrackWidth);
-        sendOutputdB = Math.pow(sendOutput, 4) * 4;
-        wwr_req("SET/TRACK/" + selectChoiceIdx + "/SEND/" + -this.id + "/VOL/" + sendOutputdB)
+        if (mixerMode === "pan") {
+            var panOutput = (offsetX / sendThumbTrackWidth) * 2 - 1;
+            sendOutputPan = Math.max(-1, Math.min(1, panOutput));
+            sendLine.setAttributeNS(null, "x1", String(HORIZ_PAN_CENTER_X));
+            sendLine.setAttributeNS(null, "x2", String(offsetX262));
+            wwr_req("SET/TRACK/" + selectChoiceIdx + "/SEND/" + -this.id + "/PAN/" + sendOutputPan);
+            } else {
+            var sendOutput = (offsetX / sendThumbTrackWidth);
+            sendOutputdB = Math.pow(sendOutput, 4) * 4;
+            sendLine.setAttributeNS(null, "x2", String(offsetX262));
+            wwr_req("SET/TRACK/" + selectChoiceIdx + "/SEND/" + -this.id + "/VOL/" + sendOutputdB);
+            }
         }
     }
     
 function sendMouseUpHandler(event){
-    wwr_req("SET/TRACK/" + selectChoiceIdx + "/SEND/" + -this.id + "/VOL/" + sendOutputdB + "e");
+    if (mouseDown !== 1) { mouseDown = 0; return; }
+    if (mixerMode === "pan") {
+        wwr_req("SET/TRACK/" + selectChoiceIdx + "/SEND/" + -this.id + "/PAN/" + sendOutputPan);
+        } else {
+        wwr_req("SET/TRACK/" + selectChoiceIdx + "/SEND/" + -this.id + "/VOL/" + sendOutputdB + "e");
+        }
     mouseDown = 0;
-    }    
+    }
 
 function volFaderConect(content, thumb){
     content.addEventListener("mousemove", mouseMoveHandler, false);
@@ -421,7 +505,25 @@ function sendConect(content, thumb){
     thumb.addEventListener('touchstart', function(event){
         if (event.touches.length > 0) mouseDownHandler(event, event.srcElement);
         event.preventDefault(); }, false);
-    }    
+    if (!content._dblTapWired) {
+        content._dblTapWired = true;
+        var dblTapH = function(e) {
+            detectPanDoubleTap("h" + content.id, -content.id, function(){
+                var thumbEl = content.getElementsByClassName("sendThumb")[0];
+                var lineEl  = content.getElementsByClassName("sendLine")[0];
+                var dbEl    = content.getElementsByClassName("sDbText")[0];
+                if (thumbEl) thumbEl.setAttributeNS(null, "cx", String(HORIZ_PAN_CENTER_X));
+                if (lineEl) {
+                    lineEl.setAttributeNS(null, "x1", String(HORIZ_PAN_CENTER_X));
+                    lineEl.setAttributeNS(null, "x2", String(HORIZ_PAN_CENTER_X));
+                    }
+                if (dbEl) dbEl.textContent = panToStr(0);
+                });
+            };
+        content.addEventListener("touchstart", dblTapH, false);
+        content.addEventListener("mousedown",  dblTapH, false);
+        }
+    }
     
 function wwr_onreply(results) {
    var resultsDisplay = document.getElementById("_results");
@@ -468,11 +570,12 @@ for (var x=0;x<ar.length;x++) {
                 var f = -tok[2] - 1;
                 receiveIdxAr[f] = tok[6];
                 receiveVolAr[f] = tok[4];
+                if (tok[6] != -1) receivePanAr[f] = parseFloat(tok[5]) || 0;
                 if(tok[6]==-1){hardVol = tok[4]}
                 if(tok[3]&8){receiveMuteAr[f] = 1}
                 else{receiveMuteAr[f] = 0}
                 }
-        break;    
+        break;
         }
     }
     
@@ -551,6 +654,8 @@ for (var x=0;x<ar.length;x++) {
         faderContent.appendChild(cloneFader);
         instructions.style.display = "none";
         }
+    var _mmBtn = document.getElementById("mixerModeBtn");
+    if (_mmBtn) _mmBtn.style.display = (drawnReceives != null) ? "" : "none";
     
     
     
@@ -580,14 +685,34 @@ for (var x=0;x<ar.length;x++) {
                 sendTitleText = thisChild.getElementsByClassName("sendTitleText")[0]
                 sDbText = thisChild.getElementsByClassName("sDbText")[0];
                 }
-            if(sendTitleText && sendTitleText.textContent!=thisName)sendTitleText.textContent = thisName;      
-            if(sDbText && sDbText.Content!=thisVol)sDbText.textContent = thisVol;
+            if(sendTitleText && sendTitleText.textContent!=thisName)sendTitleText.textContent = thisName;
+
             var sendLine = thisChild.getElementsByClassName("sendLine")[0];
-            sSetting = (Math.pow(receiveVolAr[x], 1/4) * 154) + 27;
-            if(mouseDown != 1){sendLine.setAttributeNS(null, "x2", sSetting);}
             var sendThumb = thisChild.getElementsByClassName("sendThumb")[0];
-            if(mouseDown != 1){sendThumb.setAttributeNS(null, "cx", sSetting);}
-            
+            var panTick = thisChild.querySelector(".panCenterTick");
+            var inPanMode = (mixerMode === "pan");
+
+            if (inPanMode) {
+                var pan = receivePanAr[x] || 0;
+                var panX = HORIZ_PAN_CENTER_X + pan * HORIZ_PAN_HALF;
+                if (mouseDown != 1) {
+                    sendThumb.setAttributeNS(null, "cx", String(panX));
+                    sendLine.setAttributeNS(null, "x1", String(HORIZ_PAN_CENTER_X));
+                    sendLine.setAttributeNS(null, "x2", String(panX));
+                    }
+                if (sDbText) sDbText.textContent = panToStr(pan);
+                if (panTick) panTick.style.display = "";
+                } else {
+                sSetting = (Math.pow(receiveVolAr[x], 1/4) * 154) + 27;
+                if (mouseDown != 1) {
+                    sendThumb.setAttributeNS(null, "cx", sSetting);
+                    sendLine.setAttributeNS(null, "x1", "27");
+                    sendLine.setAttributeNS(null, "x2", sSetting);
+                    }
+                if (sDbText && sDbText.textContent !== thisVol) sDbText.textContent = thisVol;
+                if (panTick) panTick.style.display = "none";
+                }
+
             sendConect(thisChild,sendThumb);
             
             var sendThumbColour = thisChild.getAttribute("style")
@@ -665,6 +790,32 @@ function updateModeToggleIcon(){
     if (!btn) return;
     btn.innerHTML = MODE_ICONS[modeOverride] || MODE_ICONS.auto;
     btn.setAttribute("title", "Layout: " + MODE_LABELS[modeOverride]);
+    var lbl = document.getElementById("layoutModeLabel");
+    if (lbl) lbl.textContent = MODE_LABELS[modeOverride] || "Auto";
+    }
+
+function updateMixerModeBtn(){
+    var btn = document.getElementById("mixerModeBtn");
+    if (!btn) return;
+    if (mixerMode === "pan") {
+        btn.textContent = "PAN";
+        btn.classList.add("pan-active");
+        btn.setAttribute("title", "Mixer mode: Pan — tap to switch to Volume");
+        } else {
+        btn.textContent = "VOL";
+        btn.classList.remove("pan-active");
+        btn.setAttribute("title", "Mixer mode: Volume — tap to switch to Pan");
+        }
+    }
+
+function cycleMixerMode(){
+    mixerMode = (mixerMode === "mix") ? "pan" : "mix";
+    // Rebuild mixer strips so pan/vol visuals apply immediately
+    var receivesEl = document.getElementById("receives");
+    var vertMixerEl = document.getElementById("vertMixer");
+    if (receivesEl) receivesEl.innerHTML = "";
+    if (vertMixerEl) vertMixerEl.innerHTML = "";
+    updateMixerModeBtn();
     }
 
 function applyMode(){
@@ -702,15 +853,21 @@ else if (vertModeMQ.addListener) vertModeMQ.addListener(onOrientationChange);
 // for the toggle button itself, but applyMode is safe to call early (it null-checks).
 loadModePreference();
 isVertMode = getEffectiveMode();
-// Wire the button once DOM is ready.
+// Wire buttons once DOM is ready.
 function wireModeToggle(){
-    var btn = document.getElementById("modeToggle");
-    if (btn && !btn._wired) {
-        btn._wired = true;
-        btn.addEventListener("click", cycleMode);
+    var layoutBtn = document.getElementById("modeToggle");
+    if (layoutBtn && !layoutBtn._wired) {
+        layoutBtn._wired = true;
+        layoutBtn.addEventListener("click", cycleMode);
         }
-    // Also apply body class + icon now that DOM exists.
+    var mixBtn = document.getElementById("mixerModeBtn");
+    if (mixBtn && !mixBtn._wired) {
+        mixBtn._wired = true;
+        mixBtn.addEventListener("click", cycleMixerMode);
+        }
+    // Apply body class + icons now that DOM exists.
     applyMode();
+    updateMixerModeBtn();
     }
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", wireModeToggle);
@@ -745,29 +902,45 @@ function vertMouseMoveHandler(event){
     if (offsetY < 0) offsetY = 0;
     if (offsetY > trackEffH) offsetY = trackEffH;
 
-    var volOutput = offsetY / trackEffH;       // 0..1 across the visible track
-    var volOutputdB = Math.pow(volOutput, 4) * 4;  // same curve as horizontal
-    sendOutputdB = volOutputdB;
-
-    // Visual update: map normalised position back into SVG coords.
-    var svgOffset = Math.pow(volOutputdB, 1/4) * VERT_TRAVEL_SVG;
-    var svgY = VERT_THUMB_BOTTOM_Y - svgOffset;
     var thumbEl = sliderSvg.getElementsByClassName("sendThumb")[0];
-    var lineEl = sliderSvg.getElementsByClassName("sendLine")[0];
+    var lineEl  = sliderSvg.getElementsByClassName("sendLine")[0];
     var faderEl = sliderSvg.getElementsByClassName("fader")[0];
-    if (thumbEl) thumbEl.setAttributeNS(null, "cy", svgY);
-    if (lineEl)  lineEl.setAttributeNS(null, "y2", svgY);
-    if (faderEl) faderEl.setAttributeNS(null, "transform", "translate(0 " + (-svgOffset) + ")");
-
     var sendIdx = sliderSvg.dataset.sendIdx;
-    wwr_req("SET/TRACK/" + selectChoiceIdx + "/SEND/" + sendIdx + "/VOL/" + volOutputdB);
+    var inPanMode = (mixerMode === "pan") && sliderSvg.dataset.sendIdx !== "0";
+
+    if (inPanMode) {
+        var panOutput = (offsetY / trackEffH) * 2 - 1;  // bottom=−1 up=+1
+        sendOutputPan = Math.max(-1, Math.min(1, panOutput));
+        var panSvgY = VERT_PAN_CENTER_Y - sendOutputPan * VERT_PAN_HALF;
+        if (thumbEl) thumbEl.setAttributeNS(null, "cy", String(panSvgY));
+        if (lineEl) {
+            lineEl.setAttributeNS(null, "y1", String(VERT_PAN_CENTER_Y));
+            lineEl.setAttributeNS(null, "y2", String(panSvgY));
+            }
+        wwr_req("SET/TRACK/" + selectChoiceIdx + "/SEND/" + sendIdx + "/PAN/" + sendOutputPan);
+        } else {
+        var volOutput = offsetY / trackEffH;
+        var volOutputdB = Math.pow(volOutput, 4) * 4;
+        sendOutputdB = volOutputdB;
+
+        var svgOffset = Math.pow(volOutputdB, 1/4) * VERT_TRAVEL_SVG;
+        var svgY = VERT_THUMB_BOTTOM_Y - svgOffset;
+        if (thumbEl) thumbEl.setAttributeNS(null, "cy", svgY);
+        if (lineEl)  lineEl.setAttributeNS(null, "y2", svgY);
+        if (faderEl) faderEl.setAttributeNS(null, "transform", "translate(0 " + (-svgOffset) + ")");
+
+        wwr_req("SET/TRACK/" + selectChoiceIdx + "/SEND/" + sendIdx + "/VOL/" + volOutputdB);
+        }
     }
 
 function vertMouseUpHandler(event){
     var sliderSvg = this;
+    if (mouseDown !== 1) { mouseDown = 0; return; }
     var sendIdx = sliderSvg.dataset.sendIdx;
-    // Commit message ("e" suffix) only for receives, matching horizontal behaviour.
-    if (sendIdx !== "0") {
+    var inPanMode = (mixerMode === "pan") && sendIdx !== "0";
+    if (inPanMode) {
+        wwr_req("SET/TRACK/" + selectChoiceIdx + "/SEND/" + sendIdx + "/PAN/" + sendOutputPan);
+        } else if (sendIdx !== "0") {
         wwr_req("SET/TRACK/" + selectChoiceIdx + "/SEND/" + sendIdx + "/VOL/" + sendOutputdB + "e");
         }
     mouseDown = 0;
@@ -798,6 +971,23 @@ function vertConnect(svgElement, thumbElement){
             e.preventDefault();
             }, false);
         }
+    var dblTapV = function(e){
+        var sendIdx = svgElement.dataset.sendIdx;
+        detectPanDoubleTap("v" + sendIdx, sendIdx, function(){
+            var thumbEl = svgElement.getElementsByClassName("sendThumb")[0];
+            var lineEl  = svgElement.getElementsByClassName("sendLine")[0];
+            var chanEl  = svgElement.parentElement;
+            var dbEl    = chanEl ? chanEl.querySelector(".vertDb") : null;
+            if (thumbEl) thumbEl.setAttributeNS(null, "cy", String(VERT_PAN_CENTER_Y));
+            if (lineEl) {
+                lineEl.setAttributeNS(null, "y1", String(VERT_PAN_CENTER_Y));
+                lineEl.setAttributeNS(null, "y2", String(VERT_PAN_CENTER_Y));
+                }
+            if (dbEl) dbEl.textContent = panToStr(0);
+            });
+        };
+    svgElement.addEventListener("touchstart", dblTapV, false);
+    svgElement.addEventListener("mousedown",  dblTapV, false);
     }
 
 function renderVertical(drawnReceives){
@@ -871,7 +1061,6 @@ function renderVertical(drawnReceives){
         var thisCol = "#" + (trackColoursAr[receiveIdxAr[x]] | 0x1000000).toString(16).substr(-6);
 
         if (titleEl && titleEl.textContent !== thisName) titleEl.textContent = thisName;
-        if (dbEl && dbEl.textContent !== thisVol) dbEl.textContent = thisVol;
 
         if (thisCol !== "#000000") {
             if (thumbEl) thumbEl.setAttributeNS(null, "fill", thisCol);
@@ -881,11 +1070,33 @@ function renderVertical(drawnReceives){
             if (titleEl) titleEl.style.color = "#A3A3A3";
             }
 
+        var inPanMode = (mixerMode === "pan");
+        var panTick = sliderSvg ? sliderSvg.querySelector(".panCenterTick") : null;
         var svgOff = Math.pow(receiveVolAr[x], 1/4) * VERT_TRAVEL_SVG;
         var svgY = VERT_THUMB_BOTTOM_Y - svgOff;
-        if (mouseDown != 1) {
-            if (thumbEl) thumbEl.setAttributeNS(null, "cy", svgY);
-            if (lineEl) lineEl.setAttributeNS(null, "y2", svgY);
+
+        if (inPanMode) {
+            var pan = receivePanAr[x] || 0;
+            var panSvgY = VERT_PAN_CENTER_Y - pan * VERT_PAN_HALF;
+            if (mouseDown != 1) {
+                if (thumbEl) thumbEl.setAttributeNS(null, "cy", String(panSvgY));
+                if (lineEl) {
+                    lineEl.setAttributeNS(null, "y1", String(VERT_PAN_CENTER_Y));
+                    lineEl.setAttributeNS(null, "y2", String(panSvgY));
+                    }
+                }
+            if (dbEl) dbEl.textContent = panToStr(pan);
+            if (panTick) panTick.style.display = "";
+            } else {
+            if (mouseDown != 1) {
+                if (thumbEl) thumbEl.setAttributeNS(null, "cy", svgY);
+                if (lineEl) {
+                    lineEl.setAttributeNS(null, "y1", String(VERT_THUMB_BOTTOM_Y));
+                    lineEl.setAttributeNS(null, "y2", svgY);
+                    }
+                }
+            if (dbEl && dbEl.textContent !== thisVol) dbEl.textContent = thisVol;
+            if (panTick) panTick.style.display = "none";
             }
 
         if (muteEl) {
@@ -916,78 +1127,82 @@ function renderVertical(drawnReceives){
      (persisted in localStorage).
    =========================================================== */
 var SETTINGS_OPTION_LABEL = "⚙ Project Settings";
+var GEN_SETTINGS_OPTION_LABEL = "⚙ General Settings";
 var SETTINGS_SEPARATOR_LABEL = "──────────";
 var inSettingsView = false;
+var inGenSettingsView = false;
 var currentTsNum = 4, currentTsDen = 4;
 var lastSentTempo = 120;
 
 function ensureSettingsOption(){
     var trackSelect = document.getElementById("trackSelect");
     if (!trackSelect) return;
-    // Walk existing options to see if the Settings option is already there.
-    var hasSettings = false;
+    // Check if the options are already present.
+    var hasProject = false, hasGeneral = false;
     for (var i = 0; i < trackSelect.options.length; i++) {
-        if (trackSelect.options[i].text === SETTINGS_OPTION_LABEL) {
-            hasSettings = true;
-            break;
-            }
+        if (trackSelect.options[i].text === SETTINGS_OPTION_LABEL) hasProject = true;
+        if (trackSelect.options[i].text === GEN_SETTINGS_OPTION_LABEL) hasGeneral = true;
         }
-    if (hasSettings) return;
-    // Only add once the dropdown has been populated with at least one
-    // real monitor track entry (i.e. more than just the placeholder).
+    if (hasProject && hasGeneral) return;
+    // Only add once the dropdown has at least one real monitor track.
     if (trackSelect.options.length <= 1) return;
-    var sep = document.createElement("option");
-    sep.text = SETTINGS_SEPARATOR_LABEL;
-    sep.disabled = true;
-    trackSelect.add(sep);
-    var settingsOpt = document.createElement("option");
-    settingsOpt.text = SETTINGS_OPTION_LABEL;
-    trackSelect.add(settingsOpt);
+    if (!hasProject && !hasGeneral) {
+        var sep = document.createElement("option");
+        sep.text = SETTINGS_SEPARATOR_LABEL;
+        sep.disabled = true;
+        trackSelect.add(sep);
+        }
+    if (!hasProject) {
+        var settingsOpt = document.createElement("option");
+        settingsOpt.text = SETTINGS_OPTION_LABEL;
+        trackSelect.add(settingsOpt);
+        }
+    if (!hasGeneral) {
+        var genOpt = document.createElement("option");
+        genOpt.text = GEN_SETTINGS_OPTION_LABEL;
+        trackSelect.add(genOpt);
+        }
     }
 
 function updateSettingsView(){
     var trackSelect = document.getElementById("trackSelect");
     if (!trackSelect) return;
 
-    // If we believe we're in Settings view but the dropdown lost the
-    // selection (this happens when the dropdown gets rebuilt because
-    // monitor-track count changed), restore the Settings selection so
-    // the user doesn't get kicked out. Distinguish "rebuild" from "user
-    // explicitly picked something else" by checking selectedIndex: after
-    // a rebuild the selectedIndex resets to 0 (the italic placeholder);
-    // an explicit pick produces a non-zero selectedIndex.
-    if (inSettingsView
-        && trackSelect.value !== SETTINGS_OPTION_LABEL
+    // If we're in a settings view but the dropdown got rebuilt (selectedIndex
+    // resets to 0), restore the correct selection so the user isn't kicked out.
+    var anySettings = inSettingsView || inGenSettingsView;
+    var restoredLabel = inSettingsView ? SETTINGS_OPTION_LABEL : GEN_SETTINGS_OPTION_LABEL;
+    if (anySettings
+        && trackSelect.value !== restoredLabel
         && trackSelect.selectedIndex === 0) {
         for (var i = 0; i < trackSelect.options.length; i++) {
-            if (trackSelect.options[i].text === SETTINGS_OPTION_LABEL) {
-                trackSelect.value = SETTINGS_OPTION_LABEL;
-                selectChoiceOld = SETTINGS_OPTION_LABEL; // keep originals in sync
+            if (trackSelect.options[i].text === restoredLabel) {
+                trackSelect.value = restoredLabel;
+                selectChoiceOld = restoredLabel;
                 return;
                 }
             }
         }
 
     var picked = trackSelect.value;
-    var wantsSettings = (picked === SETTINGS_OPTION_LABEL);
-    if (wantsSettings !== inSettingsView) {
-        inSettingsView = wantsSettings;
+    var wantsProject = (picked === SETTINGS_OPTION_LABEL);
+    var wantsGeneral = (picked === GEN_SETTINGS_OPTION_LABEL);
+
+    if (wantsProject !== inSettingsView) {
+        inSettingsView = wantsProject;
         document.body.classList.toggle("in-settings", inSettingsView);
         if (inSettingsView) {
             setupSettingsHandlers();
-            // Request a fresh BEATPOS immediately so time-sig fields show
-            // the real project values right away rather than waiting for
-            // the next polling tick. Also probe ExtState for the
-            // auto-registered tsig action ID and the live tempo (if the
-            // optional monitor script is running).
             wwr_req("BEATPOS;GET/EXTSTATE/MoreMe/tsig_action_id;GET/EXTSTATE/MoreMe/current_tempo");
-            // Recurring poll for live tempo (only while Settings is open).
             wwr_req_recur("GET/EXTSTATE/MoreMe/current_tempo", 250);
-            }
-        else {
-            // Tempo isn't visible outside Settings; stop polling for it.
+            } else {
             wwr_req_recur_cancel("GET/EXTSTATE/MoreMe/current_tempo");
             }
+        }
+
+    if (wantsGeneral !== inGenSettingsView) {
+        inGenSettingsView = wantsGeneral;
+        document.body.classList.toggle("in-gen-settings", inGenSettingsView);
         }
     }
 
@@ -1238,7 +1453,7 @@ function init(){
     <select id="trackSelect">
         <option>Select your monitor track...</option>
     </select>
-    <button id="modeToggle" type="button" aria-label="Layout mode" title="Layout: Auto"></button>
+    <button id="mixerModeBtn" type="button" aria-label="Mixer mode" title="Mixer mode: Volume">VOL</button>
 </div>
 
 <div id="instructions">
@@ -1256,6 +1471,19 @@ Don't forget - you'll probably want to disable its Master Send.<br><br>
 <div id="vertMixer"></div>
 
 <!-- Project Settings panel (shown when "Project Settings" picked in dropdown). -->
+<!-- General Settings panel -->
+<div id="genSettingsPanel">
+    <h2>GENERAL SETTINGS</h2>
+    <div class="settingField">
+        <span class="settingLabel">Layout</span>
+        <div id="layoutToggleRow">
+            <span id="layoutModeLabel" style="color:#A9ABAB;font-size:0.85em">Auto</span>
+            <button id="modeToggle" type="button" aria-label="Layout mode" title="Layout: Auto"></button>
+        </div>
+    </div>
+</div>
+
+<!-- Project Settings panel -->
 <div id="settingsPanel">
     <h2>PROJECT SETTINGS</h2>
     <div class="settingField">
@@ -1363,6 +1591,7 @@ Don't forget - you'll probably want to disable its Master Send.<br><br>
         <path class="sendBg" fill="#262626" d="M244,0c-0.3,0-0.7,0-1,0v0H142h-17H27v0c-0.3,0-0.7,0-1,0C13.8,0,4,9.8,4,22s9.8,22,22,22
             c0.3,0,0.7,0,1,0v0h98h17h101v0c0.3,0,0.7,0,1,0c12.2,0,22-9.8,22-22S256.2,0,244,0z"/>
         <line class="sendLine" style="pointer-events:none" fill="none" opacity="0.5" stroke="#404040"  stroke-width="38" stroke-linecap="round" stroke-miterlimit="10" x1="27" y1="22" x2="130" y2="22"/>
+        <line class="panCenterTick" style="display:none;pointer-events:none" x1="135" y1="6" x2="135" y2="38" stroke="#909090" stroke-width="1.5" stroke-linecap="round"/>
         <text class="sendTitleText" style="pointer-events:none" transform="matrix(1 0 0 1 25 29)" fill="#A3A3A3" font-family="'Open Sans'" font-size="19px">Target Name</text>
         <text class="sDbText" style="pointer-events:none" text-anchor="end" transform="matrix(1 0 0 1 250 27)" fill="#A3A3A3" font-family="'Open Sans'" font-size="12px">xx dB</text>
         <circle class="sendThumb" opacity="0.5" fill="#808080" stroke="#262626" stroke-width="2" stroke-miterlimit="10" cx="26" cy="22" r="19"/>
@@ -1428,6 +1657,7 @@ Don't forget - you'll probably want to disable its Master Send.<br><br>
             <svg version="1.1" class="vertSlider sendSvgVert" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 220" preserveAspectRatio="none">
                 <rect class="sendBg" fill="#262626" x="2" y="2" width="46" height="216" rx="23"/>
                 <line class="sendLine" style="pointer-events:none" fill="none" opacity="0.5" stroke="#404040" stroke-width="36" stroke-linecap="round" stroke-miterlimit="10" x1="25" y1="195" x2="25" y2="195"/>
+                <line class="panCenterTick" style="display:none;pointer-events:none" x1="8" y1="110" x2="42" y2="110" stroke="#909090" stroke-width="1.5" stroke-linecap="round"/>
                 <circle class="sendThumb" opacity="0.6" fill="#808080" stroke="#262626" stroke-width="2" stroke-miterlimit="10" cx="25" cy="195" r="18"/>
             </svg>
             <div class="vertControls">
