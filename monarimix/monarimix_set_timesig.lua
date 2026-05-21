@@ -1,6 +1,6 @@
 -- monarimix_set_timesig.lua
 --
--- Companion ReaScript for more_me_2.html. Does two jobs:
+-- Companion ReaScript for monarimix.html. Does two jobs:
 --
 --   1. Self-registers its own command ID into a persistent ExtState slot
 --      so the web page can auto-discover it (no copy-pasting of "_RS..."
@@ -14,7 +14,7 @@
 --   2. Click "New action..." -> "Load ReaScript..." and pick this file.
 --   3. Run the action once from the Action List. This populates the
 --      ExtState slot that the web page reads for auto-discovery.
---   4. Refresh the more_me_2 web page. Time-sig controls now work.
+--   4. Refresh the monarimix web page. Time-sig controls now work.
 --
 -- The script is also invoked automatically by the web page every time the
 -- user changes the time signature from there.

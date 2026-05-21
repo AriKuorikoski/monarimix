@@ -13,10 +13,10 @@ REAPER serves files from two paths, with the user resource folder taking precede
 
 Both files are required:
 
-- `more_me_2.html` — the page (this document describes its behaviour).
+- `monarimix.html` — the page (this document describes its behaviour).
 - `main.js` — provides `wwr_req`, `wwr_start`, `wwr_req_recur`, `wwr_onreply`, `mkvolstr`. The page will not function without it.
 
-Open in a browser at `http://<reaper-host>:<port>/more_me_2.html`.
+Open in a browser at `http://<reaper-host>:<port>/monarimix.html`.
 
 ## Setup in REAPER
 
@@ -93,9 +93,9 @@ Hover (desktop) or long-press (touch) shows the current mode as a tooltip.
 
 The hash takes precedence over any other setting on load:
 
-- `more_me_2.html#v` → forces Vertical.
-- `more_me_2.html#h` → forces Horizontal.
-- `more_me_2.html#auto` (or no hash) → Auto.
+- `monarimix.html#v` → forces Vertical.
+- `monarimix.html#h` → forces Horizontal.
+- `monarimix.html#auto` (or no hash) → Auto.
 
 Useful for bookmarking. Give one performer a `#v` link and another the same URL with `#h`, and each gets the layout they want without touching the toggle.
 
@@ -135,7 +135,7 @@ The inverse (rendering a known volume to a slider position) uses `p = volRaw^(1/
 
 ### Source code map
 
-Sections worth knowing inside `more_me_2.html`:
+Sections worth knowing inside `monarimix.html`:
 
 | Section | What it does |
 |---|---|
@@ -196,9 +196,9 @@ Sections worth knowing inside `more_me_2.html`:
 
 | URL | Effect |
 |---|---|
-| `more_me_2.html` | Auto layout, or last saved preference. |
-| `more_me_2.html#v` | Forces vertical. |
-| `more_me_2.html#h` | Forces horizontal. |
-| `more_me_2.html#auto` | Forces auto. |
+| `monarimix.html` | Auto layout, or last saved preference. |
+| `monarimix.html#v` | Forces vertical. |
+| `monarimix.html#h` | Forces horizontal. |
+| `monarimix.html#auto` | Forces auto. |
 
 | Tap-cycle on toggle button | Auto → Vertical → Horizontal → Auto |

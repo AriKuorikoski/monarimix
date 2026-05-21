@@ -28,7 +28,7 @@ Source: https://github.com/YOUR-USERNAME/YOUR-REPO
   <!-- Web page (HTML). Installs to reaper_www_root/.                  -->
   <!-- ============================================================== -->
   <category name="Web Interfaces">
-    <reapack name="more_me_2.html" type="webinterface" desc="MoreMe 2 personal monitor mixer">
+    <reapack name="monarimix.html" type="webinterface" desc="MoreMe 2 personal monitor mixer">
       <metadata>
         <description><![CDATA[
 Performer-facing monitor mixer plus a Project Settings panel for tempo and
@@ -47,8 +47,8 @@ time signature. Layout auto-flips between horizontal (portrait) and vertical
 ]]></changelog>
         <!-- 'file' attribute overrides where ReaPack drops it. webinterface
              type defaults to reaper_www_root, but being explicit doesn't hurt. -->
-        <source file="more_me_2.html">https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/monarimix/more_me_2.html</source>
-        <source file="more_me_2.md">https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/monarimix/more_me_2.md</source>
+        <source file="monarimix.html">https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/monarimix/monarimix.html</source>
+        <source file="monarimix.md">https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/monarimix/monarimix.md</source>
       </version>
     </reapack>
   </category>
@@ -110,7 +110,7 @@ REAPER Action List. Add to __startup.lua to auto-launch at REAPER start.
       <version name="1.0.0" author="Ari Kuorikoski" time="2026-05-19T12:00:00Z">
         <changelog>+ Initial documentation.</changelog>
         <source file="MoreMe/INSTALL.md">https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/INSTALL.md</source>
-        <source file="MoreMe/more_me_2.md">https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/moreme/more_me_2.md</source>
+        <source file="MoreMe/monarimix.md">https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/monarimix/monarimix.md</source>
       </version>
     </reapack>
   </category>

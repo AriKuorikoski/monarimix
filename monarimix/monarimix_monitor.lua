@@ -1,6 +1,6 @@
 -- monarimix_monitor.lua
 --
--- Optional companion script for more_me_2.html. Runs continuously in the
+-- Optional companion script for monarimix.html. Runs continuously in the
 -- background and writes the project's current tempo into ExtState so the
 -- web page can show live updates (REAPER's web-remote API has no command
 -- to query tempo directly, so we go through ExtState as a side channel).

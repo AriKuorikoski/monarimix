@@ -71,8 +71,8 @@ Vertical-pan had no bug because both drag and render already used the same const
 ```
 c:\Users\Ari\source\AKReapack\
 ├── monarimix/
-│   ├── more_me_2.html           (~1680 lines) – The page itself
-│   ├── more_me_2.md             – Feature documentation (outdated; needs refresh for pan mode, VOL/PAN button, double-tap)
+│   ├── monarimix.html           (~1680 lines) – The page itself
+│   ├── monarimix.md             – Feature documentation (outdated; needs refresh for pan mode, VOL/PAN button, double-tap)
 │   ├── monarimix_set_timesig.lua   – Required companion: reads tsig num/den from ExtState, applies it
 │   └── monarimix_monitor.lua       – Optional companion: writes live tempo to ExtState
 ├── deploy.ps1                   – PowerShell script to copy files to REAPER runtime folders
@@ -82,7 +82,7 @@ c:\Users\Ari\source\AKReapack\
 └── CLAUDE.md                    – This file
 
 Runtime destinations (not in repo):
-- more_me_2.html, more_me_2.md  → %APPDATA%\REAPER\reaper_www_root\
+- monarimix.html, monarimix.md  → %APPDATA%\REAPER\reaper_www_root\
 - monarimix_set_timesig.lua, monarimix_monitor.lua  → %APPDATA%\REAPER\Scripts\
 - main.js (REAPER's stock helper)  → Already ships with REAPER; overlaid from Program Files
 ```

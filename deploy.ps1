@@ -31,15 +31,15 @@ New-Item -ItemType Directory -Force -Path $wwwRoot     | Out-Null
 New-Item -ItemType Directory -Force -Path $scriptsRoot | Out-Null
 
 # --- Copy files ---------------------------------------------------------
-Copy-Item -Force -Path (Join-Path $src "monarimix\more_me_2.html")         -Destination $wwwRoot
-Copy-Item -Force -Path (Join-Path $src "monarimix\more_me_2.md")           -Destination $wwwRoot
+Copy-Item -Force -Path (Join-Path $src "monarimix\monarimix.html")         -Destination $wwwRoot
+Copy-Item -Force -Path (Join-Path $src "monarimix\monarimix.md")           -Destination $wwwRoot
 Copy-Item -Force -Path (Join-Path $src "monarimix\monarimix_set_timesig.lua") -Destination $luaTarget
 Copy-Item -Force -Path (Join-Path $src "monarimix\monarimix_monitor.lua")     -Destination $luaTarget
 
 Write-Host ""
 Write-Host "Deployed:" -ForegroundColor Green
-Write-Host "  $(Join-Path $wwwRoot 'more_me_2.html')"
-Write-Host "  $(Join-Path $wwwRoot 'more_me_2.md')"
+Write-Host "  $(Join-Path $wwwRoot 'monarimix.html')"
+Write-Host "  $(Join-Path $wwwRoot 'monarimix.md')"
 Write-Host "  $(Join-Path $luaTarget 'monarimix_set_timesig.lua')"
 Write-Host "  $(Join-Path $luaTarget 'monarimix_monitor.lua')"
 Write-Host ""

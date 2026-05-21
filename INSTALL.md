@@ -8,8 +8,8 @@ It runs on REAPER's built-in web server. No additional software, no external ser
 
 | File | What it is | Where it goes |
 |---|---|---|
-| `more_me_2.html` | The web page itself | REAPER's `reaper_www_root` folder |
-| `more_me_2.md` | Feature documentation | Same folder as the HTML (optional but tidy) |
+| `monarimix.html` | The web page itself | REAPER's `reaper_www_root` folder |
+| `monarimix.md` | Feature documentation | Same folder as the HTML (optional but tidy) |
 | `monarimix_set_timesig.lua` | Companion ReaScript for time-signature changes | REAPER's `Scripts` folder (or anywhere REAPER can read) |
 | `monarimix_monitor.lua` | **Optional** — background script that pushes live tempo updates to the page | REAPER's `Scripts` folder |
 | `INSTALL.md` | This file | Anywhere — for your reference |
@@ -38,8 +38,8 @@ Inside that folder you'll see (or create) two sub-folders that matter:
 
 Drop the files into place:
 
-- `more_me_2.html` → `<resource-folder>/reaper_www_root/`
-- `more_me_2.md` → `<resource-folder>/reaper_www_root/` (optional)
+- `monarimix.html` → `<resource-folder>/reaper_www_root/`
+- `monarimix.md` → `<resource-folder>/reaper_www_root/` (optional)
 - `monarimix_set_timesig.lua` → `<resource-folder>/Scripts/`
 
 If `reaper_www_root/` doesn't exist yet, create it.
@@ -72,13 +72,13 @@ The first run does nothing visible, but behind the scenes the script writes its 
 On any device on the same network, open a browser and go to:
 
 ```
-http://<reaper-host>:<port>/more_me_2.html
+http://<reaper-host>:<port>/monarimix.html
 ```
 
 - `<reaper-host>` is the IP address or `.local` name of the computer running REAPER.
 - `<port>` is the number you noted in Step 3.
 
-You'll see the track-select dropdown. If you've configured at least one monitor track (see *Setup in REAPER* in `more_me_2.md`), it appears in the dropdown alongside an **⚙ Project Settings** option at the bottom.
+You'll see the track-select dropdown. If you've configured at least one monitor track (see *Setup in REAPER* in `monarimix.md`), it appears in the dropdown alongside an **⚙ Project Settings** option at the bottom.
 
 ## Step 6 — Verify time-signature setting works
 
@@ -130,7 +130,7 @@ The layout auto-flips on viewport orientation. Use the toggle button beside the 
 
 ## Updating later
 
-To update to a newer version: replace `more_me_2.html`, `monarimix_set_timesig.lua`, and (if installed) `monarimix_monitor.lua` with the new files. Hard-reload the page to flush the browser cache. ReaScript command IDs stay stable across updates as long as the file path doesn't change, so no re-registration needed.
+To update to a newer version: replace `monarimix.html`, `monarimix_set_timesig.lua`, and (if installed) `monarimix_monitor.lua` with the new files. Hard-reload the page to flush the browser cache. ReaScript command IDs stay stable across updates as long as the file path doesn't change, so no re-registration needed.
 
 ## Uninstalling
 

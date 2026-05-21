@@ -16,8 +16,8 @@ All paths are inside `C:\Users\Ari\source\AKReapack\monarimix\`.
 
 | File | Purpose | Runtime destination |
 |---|---|---|
-| `more_me_2.html` | The page itself. ~1680 lines. | `%APPDATA%\REAPER\reaper_www_root\` |
-| `more_me_2.md` | Feature documentation for users. **Out of date** — predates pan mode, mixer-mode toggle, and the General Settings split. Refresh before any release. | Same folder as the HTML (optional). |
+| `monarimix.html` | The page itself. ~1680 lines. | `%APPDATA%\REAPER\reaper_www_root\` |
+| `monarimix.md` | Feature documentation for users. **Out of date** — predates pan mode, mixer-mode toggle, and the General Settings split. Refresh before any release. | Same folder as the HTML (optional). |
 | `monarimix_set_timesig.lua` | Required ReaScript. Applies time signature from project ExtState. Self-registers its command ID. | `%APPDATA%\REAPER\Scripts\` |
 | `monarimix_monitor.lua` | Optional ReaScript. Defer-loop that writes current tempo to ExtState so the page can show live tempo updates. | `%APPDATA%\REAPER\Scripts\` |
 | `INSTALL.md` | End-user install guide. | Repo only — not deployed. |
