@@ -2,7 +2,7 @@
 <!--
   ReaPack manifest for MoreMe 2.
 
-  To publish: host this file plus the three source files at stable URLs
+  To publish: host this file plus the source files at stable URLs
   (GitHub Pages, GitHub Releases raw URLs, or any web host that serves
   files over HTTPS). Replace every YOUR-USERNAME / YOUR-REPO placeholder
   below with your real GitHub (or other) coordinates.
@@ -47,8 +47,8 @@ time signature. Layout auto-flips between horizontal (portrait) and vertical
 ]]></changelog>
         <!-- 'file' attribute overrides where ReaPack drops it. webinterface
              type defaults to reaper_www_root, but being explicit doesn't hurt. -->
-        <source file="more_me_2.html">https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/more_me_2.html</source>
-        <source file="more_me_2.md">https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/more_me_2.md</source>
+        <source file="more_me_2.html">https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/monarimix/more_me_2.html</source>
+        <source file="more_me_2.md">https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/monarimix/more_me_2.md</source>
       </version>
     </reapack>
   </category>
@@ -57,7 +57,7 @@ time signature. Layout auto-flips between horizontal (portrait) and vertical
   <!-- Companion ReaScript. Installs to Scripts/.                     -->
   <!-- ============================================================== -->
   <category name="Scripts/MoreMe">
-    <reapack name="moreme_set_timesig.lua" type="script" desc="MoreMe 2: apply time signature from project ExtState">
+    <reapack name="monarimix_set_timesig.lua" type="script" desc="MoreMe 2: apply time signature from project ExtState">
       <metadata>
         <description><![CDATA[
 Companion ReaScript for the more_me_2.html web page. Reads numerator and
@@ -73,11 +73,11 @@ it. Run once from the Action List after install for self-registration.
 + Initial release. Sets project time signature non-interactively via
   SetTempoTimeSigMarker(). Self-registers its command ID for the web page.
 ]]></changelog>
-        <source>https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/moreme_set_timesig.lua</source>
+        <source>https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/monarimix/monarimix_set_timesig.lua</source>
       </version>
     </reapack>
 
-    <reapack name="moreme_monitor.lua" type="script" desc="MoreMe 2: optional background monitor for live tempo readback">
+    <reapack name="monarimix_monitor.lua" type="script" desc="MoreMe 2: optional background monitor for live tempo readback">
       <metadata>
         <description><![CDATA[
 Optional companion script. Runs continuously in the background and writes
@@ -91,7 +91,7 @@ REAPER Action List. Add to __startup.lua to auto-launch at REAPER start.
         <changelog><![CDATA[
 + Initial release. Defer-based loop with single-instance guard.
 ]]></changelog>
-        <source>https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/moreme_monitor.lua</source>
+        <source>https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/monarimix/monarimix_monitor.lua</source>
       </version>
     </reapack>
   </category>
@@ -110,7 +110,7 @@ REAPER Action List. Add to __startup.lua to auto-launch at REAPER start.
       <version name="1.0.0" author="Ari Kuorikoski" time="2026-05-19T12:00:00Z">
         <changelog>+ Initial documentation.</changelog>
         <source file="MoreMe/INSTALL.md">https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/INSTALL.md</source>
-        <source file="MoreMe/more_me_2.md">https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/more_me_2.md</source>
+        <source file="MoreMe/more_me_2.md">https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/moreme/more_me_2.md</source>
       </version>
     </reapack>
   </category>

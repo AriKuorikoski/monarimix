@@ -1,4 +1,4 @@
--- moreme_monitor.lua
+-- monarimix_monitor.lua
 --
 -- Optional companion script for more_me_2.html. Runs continuously in the
 -- background and writes the project's current tempo into ExtState so the

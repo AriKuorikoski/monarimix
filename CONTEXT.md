@@ -12,14 +12,14 @@ The page started life as a fork of `more_me.html`, the personal-monitor page Coc
 
 ## File inventory
 
-All paths are inside `C:\Users\Ari\source\moreme\`.
+All paths are inside `C:\Users\Ari\source\AKReapack\monarimix\`.
 
 | File | Purpose | Runtime destination |
 |---|---|---|
 | `more_me_2.html` | The page itself. ~1680 lines. | `%APPDATA%\REAPER\reaper_www_root\` |
 | `more_me_2.md` | Feature documentation for users. **Out of date** — predates pan mode, mixer-mode toggle, and the General Settings split. Refresh before any release. | Same folder as the HTML (optional). |
-| `moreme_set_timesig.lua` | Required ReaScript. Applies time signature from project ExtState. Self-registers its command ID. | `%APPDATA%\REAPER\Scripts\` |
-| `moreme_monitor.lua` | Optional ReaScript. Defer-loop that writes current tempo to ExtState so the page can show live tempo updates. | `%APPDATA%\REAPER\Scripts\` |
+| `monarimix_set_timesig.lua` | Required ReaScript. Applies time signature from project ExtState. Self-registers its command ID. | `%APPDATA%\REAPER\Scripts\` |
+| `monarimix_monitor.lua` | Optional ReaScript. Defer-loop that writes current tempo to ExtState so the page can show live tempo updates. | `%APPDATA%\REAPER\Scripts\` |
 | `INSTALL.md` | End-user install guide. | Repo only — not deployed. |
 | `index.xml` | ReaPack distribution manifest. Source URLs are `YOUR-USERNAME/YOUR-REPO` placeholders. | Hosting only — not deployed. |
 | `deploy.ps1` | Copies the four runtime files into their REAPER folders. Run after each edit. | Repo only. |
@@ -50,7 +50,7 @@ All paths are inside `C:\Users\Ari\source\moreme\`.
 - **OSC syntax is single slash.** `OSC/tempo/raw:120`, not `OSC//tempo/raw:120`. The earlier double-slash attempt didn't work and was the source of one debugging round-trip.
 - **Time signature requires a ReaScript.** No built-in OSC alias exists for it. Adding `TIMESIG_NUMERATOR` to `Default.ReaperOSC` doesn't help — the action descriptions in that file have to be REAPER-recognised, you can't invent your own.
 - **Self-registration was added to remove copy-paste friction.** The script learns its own command ID via `reaper.get_action_context()` + `reaper.ReverseNamedCommandLookup()` and writes it to ExtState. Page picks it up automatically. Manual paste stays as a fallback for edge cases.
-- **Source repo is separate from runtime.** Files live in `C:\Users\Ari\source\moreme\`. `deploy.ps1` copies them into REAPER's folders. The user's `reaper_www_root\old\` subfolder contains stale copies of the originals and should be deleted when convenient (URL paths like `/old/more_me_2.html` still resolve and would serve stale code).
+- **Source repo is separate from runtime.** Files live in `C:\Users\Ari\source\AKReapack\monarimix\`. `deploy.ps1` copies them into REAPER's folders. The user's `reaper_www_root\old\` subfolder contains stale copies of the originals and should be deleted when convenient (URL paths like `/old/more_me_2.html` still resolve and would serve stale code).
 - **Debug strip was removed.** Earlier we had a "last sent / last reply" panel inside Project Settings for diagnosing OSC issues. It served its purpose and was cleaned up.
 - **Original Cockos code is left untouched.** We wrap `wwr_onreply` rather than modifying it. The stock `_results` element check on line ~427 is still there as a null-checked no-op. This keeps the licensing story simpler and makes future REAPER updates to `main.js` automatically beneficial.
 - **Mixer mode is a global toggle, not per-strip.** An earlier attempt put a tap-target on each strip's track-name label to enter pan mode. It was unreliable on mobile (the label is an SVG text node inside the slider's drag area). The current design: one toolbar button (`VOL` ↔ `PAN`), one global `mixerMode` flag, both layouts read it.
@@ -67,7 +67,7 @@ All paths are inside `C:\Users\Ari\source\moreme\`.
 - Decide license, add `LICENSE` file, update `index.xml`.
 - Rename project folder if "moreme" isn't the final name.
 - Delete `C:\Users\Ari\AppData\Roaming\REAPER\reaper_www_root\old\` — contains stale copies from before the source move.
-- Delete `C:\Users\Ari\AppData\Roaming\REAPER\reaper_www_root\moreme_set_timesig.lua` — a stale copy from before `deploy.ps1` started targeting `Scripts/`. After deleting, re-register the action in REAPER's Action List from the new `Scripts/` path (auto-discovery picks up the new command ID).
+- Delete `C:\Users\Ari\AppData\Roaming\REAPER\reaper_www_root\monarimix_set_timesig.lua` — a stale copy from before `deploy.ps1` started targeting `Scripts/`. After deleting, re-register the action in REAPER's Action List from the new `Scripts/` path (auto-discovery picks up the new command ID).
 - Replace `YOUR-USERNAME/YOUR-REPO` placeholders in `index.xml` once a GitHub repo exists.
 - Refresh `more_me_2.md` to document pan mode, the VOL/PAN toolbar button, double-tap-to-center, and the Project/General Settings split.
 - Consider posting a thread on the REAPER forum mentioning the project and asking about derivative-work conventions, for extra peace of mind on licensing.

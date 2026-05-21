@@ -101,7 +101,7 @@ Useful for bookmarking. Give one performer a `#v` link and another the same URL 
 
 ### Persistence
 
-Tapping the toggle saves the choice to `localStorage` under the key `moremeMode`. Closing the browser and reopening (without a URL hash) restores the choice. Clearing browser storage resets to Auto.
+Tapping the toggle saves the choice to `localStorage` under the key `monarimixMode`. Closing the browser and reopening (without a URL hash) restores the choice. Clearing browser storage resets to Auto.
 
 Precedence on load: **URL hash → localStorage → Auto**.
 

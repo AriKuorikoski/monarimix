@@ -10,8 +10,8 @@ It runs on REAPER's built-in web server. No additional software, no external ser
 |---|---|---|
 | `more_me_2.html` | The web page itself | REAPER's `reaper_www_root` folder |
 | `more_me_2.md` | Feature documentation | Same folder as the HTML (optional but tidy) |
-| `moreme_set_timesig.lua` | Companion ReaScript for time-signature changes | REAPER's `Scripts` folder (or anywhere REAPER can read) |
-| `moreme_monitor.lua` | **Optional** — background script that pushes live tempo updates to the page | REAPER's `Scripts` folder |
+| `monarimix_set_timesig.lua` | Companion ReaScript for time-signature changes | REAPER's `Scripts` folder (or anywhere REAPER can read) |
+| `monarimix_monitor.lua` | **Optional** — background script that pushes live tempo updates to the page | REAPER's `Scripts` folder |
 | `INSTALL.md` | This file | Anywhere — for your reference |
 
 The `main.js` helper required by the page already ships with REAPER. You don't need to copy it.
@@ -40,7 +40,7 @@ Drop the files into place:
 
 - `more_me_2.html` → `<resource-folder>/reaper_www_root/`
 - `more_me_2.md` → `<resource-folder>/reaper_www_root/` (optional)
-- `moreme_set_timesig.lua` → `<resource-folder>/Scripts/`
+- `monarimix_set_timesig.lua` → `<resource-folder>/Scripts/`
 
 If `reaper_www_root/` doesn't exist yet, create it.
 
@@ -61,8 +61,8 @@ This is the one-time step that lets the page change the project's time signature
 
 1. In REAPER, open the **Actions menu → Show action list** (shortcut: `?` or `Shift+/`).
 2. Click **New action…** at the bottom-right, then **Load ReaScript…**.
-3. Navigate to `<resource-folder>/Scripts/` and pick **`moreme_set_timesig.lua`**.
-4. The action now appears in the list as **Script: moreme_set_timesig.lua**.
+3. Navigate to `<resource-folder>/Scripts/` and pick **`monarimix_set_timesig.lua`**.
+4. The action now appears in the list as **Script: monarimix_set_timesig.lua**.
 5. **Run it once** — double-click it, or highlight it and click **Run**.
 
 The first run does nothing visible, but behind the scenes the script writes its own command ID into REAPER's `ExtState` storage so the web page can auto-discover it without you copy-pasting anything.
@@ -94,10 +94,10 @@ By default the page can *set* the tempo but can't *read* it back live — REAPER
 
 If you want the tempo field to reflect tempo changes made *inside REAPER* (e.g. dragging a tempo envelope, or another performer changing tempo), install the optional monitor script:
 
-1. In REAPER's Action List, click **New action… → Load ReaScript…** and pick **`moreme_monitor.lua`** from the same place you put the timesig script.
+1. In REAPER's Action List, click **New action… → Load ReaScript…** and pick **`monarimix_monitor.lua`** from the same place you put the timesig script.
 2. Run it once to start the background loop. The action toggles — running it again stops the loop.
 3. (Recommended) Add it to REAPER's startup so it's always running:
-   - In REAPER's Action List, locate **Script: moreme_monitor.lua**, right-click it → **Copy selected action command ID**.
+   - In REAPER's Action List, locate **Script: monarimix_monitor.lua**, right-click it → **Copy selected action command ID**.
    - Open or create `__startup.lua` in REAPER's resource folder root.
    - Add this line (replace `_RS…` with the ID you copied):
      ```lua
@@ -117,7 +117,7 @@ You haven't created monitor tracks yet, or no track has both at least one receiv
 Hard-reload the page (`Ctrl+Shift+R` on desktop; close-and-reopen the tab on mobile) in case the browser is serving a cached older version.
 
 **The tempo field doesn't update when I change tempo in REAPER directly.**
-That's expected unless you installed and started `moreme_monitor.lua` (Step 7). The page can only send tempo, not read it, without the monitor running.
+That's expected unless you installed and started `monarimix_monitor.lua` (Step 7). The page can only send tempo, not read it, without the monitor running.
 
 **Time signature still won't change after running the script.**
 Open the Project Settings panel, expand *Time-sig setup & help*, and use the fallback: right-click the script in REAPER's Action List → *Copy selected action command ID* → paste the resulting `_RS…` string into the field at the bottom of the setup section.
@@ -130,7 +130,7 @@ The layout auto-flips on viewport orientation. Use the toggle button beside the 
 
 ## Updating later
 
-To update to a newer version: replace `more_me_2.html`, `moreme_set_timesig.lua`, and (if installed) `moreme_monitor.lua` with the new files. Hard-reload the page to flush the browser cache. ReaScript command IDs stay stable across updates as long as the file path doesn't change, so no re-registration needed.
+To update to a newer version: replace `more_me_2.html`, `monarimix_set_timesig.lua`, and (if installed) `monarimix_monitor.lua` with the new files. Hard-reload the page to flush the browser cache. ReaScript command IDs stay stable across updates as long as the file path doesn't change, so no re-registration needed.
 
 ## Uninstalling
 

@@ -772,7 +772,7 @@ function loadModePreference(){
     if (hash === "#h") { modeOverride = "h"; return; }
     if (hash === "#auto" || hash === "#a") { modeOverride = "auto"; return; }
     try {
-        var stored = localStorage.getItem("moremeMode");
+        var stored = localStorage.getItem("monarimixMode");
         if (stored === "v" || stored === "h" || stored === "auto") modeOverride = stored;
         } catch (e) { /* localStorage may be unavailable */ }
     }
@@ -837,7 +837,7 @@ function cycleMode(){
     modeOverride = (modeOverride === "auto") ? "v"
                 : (modeOverride === "v")    ? "h"
                                             : "auto";
-    try { localStorage.setItem("moremeMode", modeOverride); } catch (e) {}
+    try { localStorage.setItem("monarimixMode", modeOverride); } catch (e) {}
     applyMode();
     }
 
@@ -1216,7 +1216,7 @@ function setupSettingsHandlers(){
     if (!tempoInput._initialised) {
         tempoInput._initialised = true;
         try {
-            var saved = localStorage.getItem("moremeTempo");
+            var saved = localStorage.getItem("monarimixTempo");
             if (saved && !isNaN(parseFloat(saved))) {
                 tempoInput.value = parseFloat(saved);
                 lastSentTempo = parseFloat(saved);
@@ -1285,7 +1285,7 @@ function setupSettingsHandlers(){
         scriptInput.value = getTsigScriptId();
         scriptInput.addEventListener("change", function(){
             var v = (scriptInput.value || "").trim();
-            try { localStorage.setItem("moremeTsigScriptId", v); } catch (e) {}
+            try { localStorage.setItem("monarimixTsigScriptId", v); } catch (e) {}
             updateTsigStatus();
             });
         // Auto-expand the setup section if no ID is configured yet.
@@ -1299,7 +1299,7 @@ function setupSettingsHandlers(){
 function sendTempo(bpm){
     lastSentTempo = bpm;
     wwr_req("OSC/tempo/raw:" + bpm);
-    try { localStorage.setItem("moremeTempo", String(bpm)); } catch (e) {}
+    try { localStorage.setItem("monarimixTempo", String(bpm)); } catch (e) {}
     }
 /* Time signature can't be set via OSC (REAPER has no built-in alias for it),
    so we go through a custom ReaScript that the user installs once. We write
@@ -1307,7 +1307,7 @@ function sendTempo(bpm){
    commands are chained in a single request so the script always sees a
    matching pair. */
 function getTsigScriptId(){
-    try { return localStorage.getItem("moremeTsigScriptId") || ""; }
+    try { return localStorage.getItem("monarimixTsigScriptId") || ""; }
     catch (e) { return ""; }
     }
 function applyTsigToReaper(){
@@ -1348,7 +1348,7 @@ function sendTimesigDenominator(d){ applyTsigToReaper(); }
 
 function parseExtStateFromResults(results){
     // EXTSTATE \t section \t key \t string
-    // Watch for MoreMe/tsig_action_id which is written by moreme_set_timesig.lua
+    // Watch for MoreMe/tsig_action_id which is written by monarimix_set_timesig.lua
     // when it self-registers. Save to localStorage so future page loads have it.
     var lines = results.split("\n");
     for (var i = 0; i < lines.length; i++) {
@@ -1358,9 +1358,9 @@ function parseExtStateFromResults(results){
             var id = (tok[3] || "").trim();
             if (id) {
                 var existing = "";
-                try { existing = localStorage.getItem("moremeTsigScriptId") || ""; } catch (e) {}
+                try { existing = localStorage.getItem("monarimixTsigScriptId") || ""; } catch (e) {}
                 if (existing !== id) {
-                    try { localStorage.setItem("moremeTsigScriptId", id); } catch (e) {}
+                    try { localStorage.setItem("monarimixTsigScriptId", id); } catch (e) {}
                     // Sync the visible input field if the user is currently looking at it.
                     var scriptInput = document.getElementById("tsigScriptId");
                     if (scriptInput) scriptInput.value = id;
@@ -1368,7 +1368,7 @@ function parseExtStateFromResults(results){
                     }
                 }
             }
-        // Live tempo update from moreme_monitor.lua (optional companion).
+        // Live tempo update from monarimix_monitor.lua (optional companion).
         else if (tok[1] === "MoreMe" && tok[2] === "current_tempo") {
             var raw = (tok[3] || "").trim();
             var bpm = parseFloat(raw);
@@ -1519,8 +1519,8 @@ Don't forget - you'll probably want to disable its Master Send.<br><br>
             <ol style="padding-left:24px; margin:0 0 12px 0">
                 <li>In REAPER: <em>Actions</em> menu &rarr; <em>Show action list</em>.</li>
                 <li>Click <em>New action&hellip;</em> &rarr; <em>Load ReaScript&hellip;</em>.</li>
-                <li>Pick <code>moreme_set_timesig.lua</code> from your REAPER folder.</li>
-                <li>Find <em>Script: moreme_set_timesig.lua</em> in the list and <strong>run it once</strong> (double-click, or highlight + click <em>Run</em>).</li>
+                <li>Pick <code>monarimix_set_timesig.lua</code> from your REAPER folder.</li>
+                <li>Find <em>Script: monarimix_set_timesig.lua</em> in the list and <strong>run it once</strong> (double-click, or highlight + click <em>Run</em>).</li>
             </ol>
             <p style="margin:0 0 12px 0">That's it &mdash; the page picks up the script's ID automatically on the next poll. The status above the &ldquo;Time-sig setup&rdquo; toggle will flip to a green &check; within a second.</p>
             <p style="margin:0 0 8px 0; color:#707070">Fallback: if auto-discovery doesn't work, paste the command ID manually. Right-click the script in the Action List &rarr; <em>Copy selected action command ID</em>, then paste here:</p>

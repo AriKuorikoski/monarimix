@@ -1,4 +1,4 @@
--- moreme_set_timesig.lua
+-- monarimix_set_timesig.lua
 --
 -- Companion ReaScript for more_me_2.html. Does two jobs:
 --
