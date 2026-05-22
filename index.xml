@@ -19,9 +19,9 @@ Personal monitor mixer for REAPER. Each performer opens a phone/tablet/laptop
 page, picks their monitor track, and dials in their own mix of receives.
 Includes a Project Settings view for live tempo and time-signature changes.
 
-Source: https://github.com/YOUR-USERNAME/YOUR-REPO
+Source: https://github.com/AriKuorikoski/monarimix
 ]]></description>
-    <link rel="website">https://github.com/YOUR-USERNAME/YOUR-REPO</link>
+    <link rel="website">https://github.com/AriKuorikoski/monarimix</link>
   </metadata>
 
   <!-- ============================================================== -->
@@ -35,7 +35,7 @@ Performer-facing monitor mixer plus a Project Settings panel for tempo and
 time signature. Layout auto-flips between horizontal (portrait) and vertical
 (landscape) channel strips. Persists user preferences in localStorage.
 ]]></description>
-        <link rel="website">https://github.com/YOUR-USERNAME/YOUR-REPO</link>
+        <link rel="website">https://github.com/AriKuorikoski/monarimix</link>
       </metadata>
       <version name="1.0.0" author="Ari Kuorikoski" time="2026-05-19T12:00:00Z">
         <changelog><![CDATA[
@@ -47,8 +47,8 @@ time signature. Layout auto-flips between horizontal (portrait) and vertical
 ]]></changelog>
         <!-- 'file' attribute overrides where ReaPack drops it. webinterface
              type defaults to reaper_www_root, but being explicit doesn't hurt. -->
-        <source file="monarimix.html">https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/monarimix/monarimix.html</source>
-        <source file="monarimix.md">https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/monarimix/monarimix.md</source>
+        <source file="monarimix.html">https://raw.githubusercontent.com/AriKuorikoski/monarimix/main/monarimix/monarimix.html</source>
+        <source file="monarimix.md">https://raw.githubusercontent.com/AriKuorikoski/monarimix/main/monarimix/monarimix.md</source>
       </version>
     </reapack>
   </category>
@@ -60,20 +60,20 @@ time signature. Layout auto-flips between horizontal (portrait) and vertical
     <reapack name="monarimix_set_timesig.lua" type="script" desc="MoreMe 2: apply time signature from project ExtState">
       <metadata>
         <description><![CDATA[
-Companion ReaScript for the more_me_2.html web page. Reads numerator and
+Companion ReaScript for the monarimix.html web page. Reads numerator and
 denominator from project ExtState (section "MoreMe", keys "tsig_num" and
 "tsig_den"), applies them as the project's initial time signature, and
 self-registers its command ID into ExtState so the web page can auto-discover
 it. Run once from the Action List after install for self-registration.
 ]]></description>
-        <link rel="website">https://github.com/YOUR-USERNAME/YOUR-REPO</link>
+        <link rel="website">https://github.com/AriKuorikoski/monarimix</link>
       </metadata>
       <version name="1.0.0" author="Ari Kuorikoski" time="2026-05-19T12:00:00Z">
         <changelog><![CDATA[
 + Initial release. Sets project time signature non-interactively via
   SetTempoTimeSigMarker(). Self-registers its command ID for the web page.
 ]]></changelog>
-        <source>https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/monarimix/monarimix_set_timesig.lua</source>
+        <source>https://raw.githubusercontent.com/AriKuorikoski/monarimix/main/monarimix/monarimix_set_timesig.lua</source>
       </version>
     </reapack>
 
@@ -81,17 +81,17 @@ it. Run once from the Action List after install for self-registration.
       <metadata>
         <description><![CDATA[
 Optional companion script. Runs continuously in the background and writes
-the project's current tempo into ExtState so the more_me_2.html page can
+the project's current tempo into ExtState so the monarimix.html page can
 display live tempo updates. Toggle on/off by running the action from the
 REAPER Action List. Add to __startup.lua to auto-launch at REAPER start.
 ]]></description>
-        <link rel="website">https://github.com/YOUR-USERNAME/YOUR-REPO</link>
+        <link rel="website">https://github.com/AriKuorikoski/monarimix</link>
       </metadata>
       <version name="1.0.0" author="Ari Kuorikoski" time="2026-05-19T12:00:00Z">
         <changelog><![CDATA[
 + Initial release. Defer-based loop with single-instance guard.
 ]]></changelog>
-        <source>https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/monarimix/monarimix_monitor.lua</source>
+        <source>https://raw.githubusercontent.com/AriKuorikoski/monarimix/main/monarimix/monarimix_monitor.lua</source>
       </version>
     </reapack>
   </category>
@@ -105,12 +105,12 @@ REAPER Action List. Add to __startup.lua to auto-launch at REAPER start.
     <reapack name="MoreMe 2 documentation" type="data" desc="MoreMe 2 install & feature documentation">
       <metadata>
         <description>Install guide and feature reference for MoreMe 2. Plain markdown; read in any editor.</description>
-        <link rel="website">https://github.com/YOUR-USERNAME/YOUR-REPO</link>
+        <link rel="website">https://github.com/AriKuorikoski/monarimix</link>
       </metadata>
       <version name="1.0.0" author="Ari Kuorikoski" time="2026-05-19T12:00:00Z">
         <changelog>+ Initial documentation.</changelog>
-        <source file="MoreMe/INSTALL.md">https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/INSTALL.md</source>
-        <source file="MoreMe/monarimix.md">https://raw.githubusercontent.com/YOUR-USERNAME/YOUR-REPO/main/monarimix/monarimix.md</source>
+        <source file="MoreMe/INSTALL.md">https://raw.githubusercontent.com/AriKuorikoski/monarimix/main/INSTALL.md</source>
+        <source file="MoreMe/monarimix.md">https://raw.githubusercontent.com/AriKuorikoski/monarimix/main/monarimix/monarimix.md</source>
       </version>
     </reapack>
   </category>
