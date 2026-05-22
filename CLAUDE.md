@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**MoreMe 2** is a phone/tablet/laptop-friendly personal-monitor mixer for REAPER (a digital audio workstation). Performers open a URL, select their monitor track, and dial in their own mix of receives and pans without needing to interact with the FOH engineer.
+**Monarimix** is a phone/tablet/laptop-friendly personal-monitor mixer for REAPER (a digital audio workstation). Performers open a URL, select their monitor track, and dial in their own mix of receives and pans without needing to interact with the FOH engineer.
 
 - **No external services, no build step.** The page is plain HTML/CSS/JS with inline SVG, served from REAPER's built-in web server.
 - **Three runtime files:** one HTML page, two optional Lua companion scripts for extended functionality beyond REAPER's stock web-remote API.
@@ -29,14 +29,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Communication Protocol with REAPER
 
-- **Long polling:** Page polls REAPER every ~100 ms via `wwr_req_recur()` (stock REAPER web-remote helper in `main.js`).
-- **Commands:** Path-style text (`SET/TRACK/idx/SEND/n/VOL/dB`), HTTP-transported, not OSC (despite the naming).
-  - Release commands end with `e` suffix for undo grouping: `SET/TRACK/idx/SEND/-N/VOL/dBe`.
-  - Mute toggles via `-1` argument: `SET/TRACK/idx/SEND/-N/MUTE/-1`.
-- **ExtState side-channel:** REAPER's web-remote API has no commands for tempo query or time-sig set. The page uses project `ExtState` (key-value storage) as a side channel:
-  - Tempo: Read from `ExtState["MoreMe"]["current_tempo"]` (written by optional `moreme_monitor.lua` on a defer loop).
-  - Time signature: Write to `ExtState["MoreMe"]["tsig_num"]` and `["tsig_den"]`, then trigger `moreme_set_timesig.lua` to apply.
-  - Script auto-discovery: `moreme_set_timesig.lua` self-registers its command ID into `ExtState["MoreMe"]["tsig_action_id"]` so the page can find it automatically.
+**Three communication channels:**
+
+1. **HTTP Web-Remote API (primary):** Path-style commands like `SET/TRACK/idx/SEND/n/VOL/dB`, transported over HTTP POST. All volume and pan adjustments go through here.
+   - Release commands end with `e` suffix for undo grouping: `SET/TRACK/idx/SEND/-N/VOL/dBe`.
+   - Mute toggles via `-1` argument: `SET/TRACK/idx/SEND/-N/MUTE/-1`.
+
+2. **OSC Bridge (tempo only):** Routed through `Default.ReaperOSC`. Single-slash syntax: `OSC/tempo/raw:<bpm>`.
+
+3. **ExtState side-channel (tempo readback & script discovery):** Project-scoped key-value storage when web-remote API lacks the command.
+   - Tempo readback: Optional `monarimix_monitor.lua` writes `Master_GetTempo()` to `ExtState["MoreMe"]["current_tempo"]` on a defer loop. Page polls every 250 ms while Project Settings is open.
+   - Time signature: Read live via `BEATPOS` polling (includes `ts_numerator` and `ts_denominator`). Set via page write to `ExtState["MoreMe"]["tsig_num"]` / `["tsig_den"]`, then trigger `monarimix_set_timesig.lua`.
+   - Script auto-discovery: `monarimix_set_timesig.lua` self-registers its command ID into `ExtState["MoreMe"]["tsig_action_id"]` so the page finds it automatically.
+
+**Polling & rendering flow:** `wwr_req_recur("NTRACK;TRACK;BEATPOS", 10)` polls every ~100 ms. Original `wwr_onreply` parses `NTRACK`/`TRACK`/`SEND` lines into top-level arrays, renders horizontal layout. A wrapper adds BEATPOS parsing, EXTSTATE polling for tempo/script-ID, and vertical-mixer rendering.
 
 ### Volume Math
 
@@ -132,29 +138,51 @@ This copies the four runtime files to REAPER's resource folders. Hard-reload the
 | `#backLoad` div | Hidden SVG/HTML templates cloned at runtime. `trackRow2Svg`, `trackSendSvg` (horizontal); `trackRow2SvgVert`, `trackSendSvgVert` (vertical). |
 | Double-tap helper | `detectPanDoubleTap()`. 350 ms window, per-strip key so different strips don't combine. |
 
-### Key Architectural Decisions
+### Key Architectural Decisions & Lessons Learned
 
-1. **Wrap, don't modify, stock code.** Reduces licensing friction, makes future REAPER updates beneficial.
-2. **OSC syntax is single-slash.** `OSC/tempo/raw:120`, not double-slash. Double-slash attempts didn't work.
-3. **Time signature requires a ReaScript.** No built-in OSC alias exists; you can't invent custom action names in `Default.ReaperOSC`.
-4. **Self-registration removes copy-paste friction.** Script learns its command ID via `get_action_context()` + `ReverseNamedCommandLookup()` and writes to ExtState.
-5. **Global VOL/PAN toggle, not per-strip.** Earlier per-strip tap-on-name was unreliable on mobile (SVG text target inside slider drag area). Current design: one toolbar button, one `mixerMode` global.
-6. **Pan readback formulas must match drag math exactly.** Discovered via iPhone "lurch" bug; calibrated constants now consistent.
-7. **Double-tap target is the whole strip, not just the center line.** Center line is too thin for reliable touch targeting.
+1. **Wrap, don't modify, stock code.** Original `wwr_onreply` stays intact and unchanged. A wrapper around it adds BEATPOS parsing, EXTSTATE parsing, dropdown Settings option, and vertical-mixer rendering. This reduces licensing friction, keeps the licensing story simple, and makes future REAPER updates to `main.js` automatically beneficial.
+
+2. **Settings split into Project and General.** `body.in-settings` shows Project Settings (REAPER project state: tempo, time signature); `body.in-gen-settings` shows General Settings (user preference: layout mode). Both hide the mixer and use `!important` (only place in the file) to win against both orientation media queries and force-mode classes.
+
+3. **OSC syntax is single-slash.** `OSC/tempo/raw:120`, not `OSC//tempo/raw:120`. The earlier double-slash attempt didn't work and was the source of one debugging round-trip.
+
+4. **Time signature requires a ReaScript.** No built-in OSC alias exists for it. Adding `TIMESIG_NUMERATOR` to `Default.ReaperOSC` doesn't help — the action descriptions in that file must be REAPER-recognized; you can't invent custom names. Solution: page writes desired num/den to project ExtState, then triggers the script.
+
+5. **Self-registration removes copy-paste friction.** `monarimix_set_timesig.lua` learns its own command ID via `reaper.get_action_context()` + `reaper.ReverseNamedCommandLookup()` and writes it to `ExtState["MoreMe"]["tsig_action_id"]`. Page picks it up automatically; manual paste stays as a fallback for edge cases.
+
+6. **Global VOL/PAN toggle, not per-strip.** Earlier iteration: each strip's track-name label toggled pan mode for that strip. Abandoned because the SVG text target was unreliable on mobile (text node inside slider's drag area causes mis-targeting). Current design: one toolbar button (`VOL` ↔ `PAN`), one global `mixerMode` flag, both layouts read it during drag and rendering. Both modes share the same code paths; the difference is a few conditional branches.
+
+7. **Pan readback formulas must match drag math exactly.** Discovered via iPhone "lurches max-right" bug in horizontal-pill pan: the readback formula incorrectly used `157 ± 131` for thumb center, but drag math constrains the thumb to `cx ∈ [26, 244]` (center 135, half-range 109). The mismatch meant readback moved the thumb further than the drag action intended. Fix: aligned readback to drag constants; both now use `HORIZ_PAN_CENTER_X = 135` and `HORIZ_PAN_HALF = 109`. Vertical-pan had no bug because both drag and render already used the same constants by construction.
+
+8. **Double-tap target is the whole strip, not just the center line.** The center line is too thin to be a reliable touch target. The line stays as a visual indicator; the gesture target is the whole strip. `detectPanDoubleTap` uses a 350 ms window and gates on a per-strip key so taps on different strips don't combine.
+
+9. **Both layouts populate every poll cycle; CSS hides the inactive one.** Wasteful but harmless. Keeps original code untouched and avoids complex reconciliation logic during mode switches.
+
+10. **Debug instrumentation was removed.** Earlier: a "last sent / last reply" panel inside Project Settings for diagnosing OSC issues. It served its purpose and was cleaned up when the feature matured.
 
 ## Pending Decisions & Loose Ends
 
-See [CONTEXT.md](CONTEXT.md) for full details. Quick summary:
+- **License:** Choose MIT (permissive) or GPL-3 (copyleft), add `LICENSE` file, update `index.xml` metadata.
+- **GitHub repo:** ✅ Created at [AriKuorikoski/monarimix](https://github.com/AriKuorikoski/monarimix).
+- **Clean up stale copies:** Delete `%APPDATA%\REAPER\reaper_www_root\old\` folder (contains pre-rename versions). Delete `%APPDATA%\REAPER\reaper_www_root\monarimix_set_timesig.lua` if present (old copy from before `deploy.ps1` targeted `Scripts/` folder). After deleting, re-register the script in REAPER's Action List from the new `Scripts/` path.
+- **Update `monarimix.md`:** Document pan mode, VOL/PAN button, double-tap-to-center, Project/General Settings split (currently marked as outdated).
 
-- **License:** Choose MIT (permissive) or GPL-3 (copyleft), add `LICENSE` file, update `index.xml`.
-- **Project name finalized:** "monarimix" is the current name (previously "moreme" placeholder).
-- **Clean up stale copies:** Delete `reaper_www_root/old/` folder and old script registrations if they exist.
-- **Update `monarimix.md`:** Document pan mode, VOL/PAN button, double-tap-to-center, Project/General Settings split.
-- **Replace GitHub placeholders:** Update `YOUR-USERNAME/YOUR-REPO` in `index.xml` once a repo exists.
+## Repository vs. Runtime Structure
 
-## Notes for Future Work
+**Source repo:** `c:\Users\Ari\source\AKReapack\monarimix\` — where you edit files.
+
+**Runtime destinations** (deployed by `deploy.ps1`):
+- `monarimix.html`, `monarimix.md` → `%APPDATA%\REAPER\reaper_www_root\`
+- `monarimix_set_timesig.lua`, `monarimix_monitor.lua` → `%APPDATA%\REAPER\Scripts\`
+
+**Not deployed** (already provided by REAPER):
+- `main.js` — REAPER ships this at `C:\Program Files\REAPER (x64)\Plugins\reaper_www_root\main.js`. REAPER's web server overlays the user folder over the install folder, so `<script src="main.js">` in monarimix.html resolves transparently to Cockos's stock file.
+
+## Notes for Future Work & Implementation Details
 
 - The page uses Google Fonts; offline devices fall back to system sans-serif.
 - The stock `init()` function is never called — harmless artefact from original code.
-- The stock code checks `_results` element with a null-check no-op on line ~427 — left untouched.
-- Master strip in horizontal mode uses `-this.id` as an unparseable value so REAPER treats it as index 0 (the hardware send); vertical mode uses explicit `data-send-idx="0"`.
+- The stock `_results` element check on line ~427 — null-checked no-op, left untouched.
+- Master strip in horizontal mode uses `-this.id` as an unparseable value so REAPER treats it as index 0 (hardware send); vertical mode uses explicit `data-send-idx="0"`.
+- Body class `body.in-settings` and `body.in-gen-settings` use `!important` declarations — only place in the file that does — to override both orientation media queries and force-mode classes.
+- Mixer div wipe on mode toggle forces clean rebuild with correct visualizations (center tick on/off, line fill direction, readout format changes).
