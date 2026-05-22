@@ -316,6 +316,24 @@
         -webkit-appearance: none;
         }
     .tempoBtn:active { background-color: #1A1A1A; }
+    #recBtn {
+        background-color: #262626;
+        color: #E05555;
+        border: 1px solid #1A1A1A;
+        border-radius: 10px;
+        height: 44px;
+        padding: 0 28px;
+        font-size: 1em;
+        cursor: pointer;
+        min-width: 120px;
+        transition: background-color 0.15s;
+        font-family: 'Open Sans', sans-serif;
+        font-weight: bold;
+        outline: none;
+        -webkit-appearance: none;
+        }
+    #recBtn:disabled { opacity: 0.45; cursor: default; }
+    #recBtn.recording { background-color: #8B0000; color: #ffffff; }
     #tempoInput, #tsigNum, #tsigDen {
         background-color: #262626;
         color: #E0E0E0;
@@ -759,6 +777,7 @@ var vertModeMQ = window.matchMedia("(orientation: landscape)");
    - h:    force horizontal (pill) layout
    URL hash wins on load (#v / #h), otherwise localStorage. */
 var modeOverride = "auto";
+var recState = "idle"; // "idle" | "seeking" | "recording"
 var MODE_ICONS = {
     auto: '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 16l3.5-9 3.5 9M9.8 13.2h4.4"/></svg>',
     v:    '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><rect x="5" y="4" width="3" height="16" rx="1"/><rect x="10.5" y="4" width="3" height="16" rx="1"/><rect x="16" y="4" width="3" height="16" rx="1"/></svg>',
@@ -1294,6 +1313,24 @@ function setupSettingsHandlers(){
             }
         }
     updateTsigStatus();
+
+    // Recording button handler.
+    var recBtn = document.getElementById("recBtn");
+    if (recBtn && !recBtn._wired) {
+        recBtn._wired = true;
+        recBtn.addEventListener("click", function(){
+            if (recState === "recording") {
+                wwr_req("1016");      // stop
+                recState = "idle";
+                updateRecBtn();
+            } else if (recState === "idle") {
+                recState = "seeking";
+                updateRecBtn();
+                wwr_req("40043");     // go to end of project; next BEATPOS reply gives position
+            }
+        });
+    }
+    updateRecBtn();
     }
 
 function sendTempo(bpm){
@@ -1301,6 +1338,15 @@ function sendTempo(bpm){
     wwr_req("OSC/tempo/raw:" + bpm);
     try { localStorage.setItem("monarimixTempo", String(bpm)); } catch (e) {}
     }
+
+function updateRecBtn(){
+    var btn = document.getElementById("recBtn");
+    if (!btn) return;
+    btn.disabled = (recState === "seeking");
+    btn.classList.toggle("recording", recState === "recording");
+    btn.textContent = recState === "recording" ? "⏹ STOP" : "⏺ REC";
+    }
+
 /* Time signature can't be set via OSC (REAPER has no built-in alias for it),
    so we go through a custom ReaScript that the user installs once. We write
    the desired num/den to project extstate, then trigger the script. Both
@@ -1394,6 +1440,8 @@ function parseBeatPosFromResults(results){
     for (var i = 0; i < lines.length; i++) {
         var tok = lines[i].split("\t");
         if (tok[0] !== "BEATPOS" || tok.length < 8) continue;
+        var playstate = parseInt(tok[1], 10);
+        var posSeconds = parseFloat(tok[2]);
         var n = parseInt(tok[6], 10);
         var d = parseInt(tok[7], 10);
         if (!isNaN(n)) currentTsNum = n;
@@ -1415,6 +1463,24 @@ function parseBeatPosFromResults(results){
                     }
                 }
             }
+        // Recording: after "go to end" command, next reply has end position. Seek +5s, start rec, add marker.
+        if (recState === "seeking" && !isNaN(posSeconds)) {
+            var startPos = posSeconds + 5;
+            wwr_req("SET/POS/" + startPos.toFixed(3) + ";1013;40157");
+            recState = "recording";
+            updateRecBtn();
+        }
+        // Sync rec state with REAPER playstate (handles external stop, crash recovery).
+        if (!isNaN(playstate)) {
+            if (playstate === 5 && recState !== "recording") {
+                recState = "recording";
+                updateRecBtn();
+            }
+            if ((playstate === 0 || playstate === 1 || playstate === 2) && recState === "recording") {
+                recState = "idle";
+                updateRecBtn();
+            }
+        }
         }
     }
 
@@ -1511,6 +1577,10 @@ Don't forget - you'll probably want to disable its Master Send.<br><br>
             </select>
         </div>
         <span id="tsigStatus" class="tsigHint">&nbsp;</span>
+    </div>
+    <div class="settingField">
+        <span class="settingLabel">Recording</span>
+        <div><button id="recBtn" type="button">⏺ REC</button></div>
     </div>
     <details id="tsigSetup" style="text-align:left; margin-bottom:24px; color:#A3A3A3; font-size:0.85em">
         <summary style="cursor:pointer; color:#A9ABAB; text-align:center">Time-sig setup &amp; help</summary>
