@@ -1553,6 +1553,10 @@ Don't forget - you'll probably want to disable its Master Send.<br><br>
 <div id="settingsPanel">
     <h2>PROJECT SETTINGS</h2>
     <div class="settingField">
+        <span class="settingLabel">Recording</span>
+        <div><button id="recBtn" type="button">⏺ REC</button></div>
+    </div>
+    <div class="settingField" style="opacity:0.4;pointer-events:none">
         <span class="settingLabel">Tempo (BPM)</span>
         <div class="tempoCtrl">
             <button class="tempoBtn" data-delta="-1" type="button">&minus;1</button>
@@ -1562,7 +1566,7 @@ Don't forget - you'll probably want to disable its Master Send.<br><br>
             <button class="tempoBtn" data-delta="1" type="button">+1</button>
         </div>
     </div>
-    <div class="settingField">
+    <div class="settingField" style="opacity:0.4;pointer-events:none">
         <span class="settingLabel">Time Signature</span>
         <div class="tsigCtrl">
             <input id="tsigNum" type="number" min="1" max="32" value="4">
@@ -1578,11 +1582,7 @@ Don't forget - you'll probably want to disable its Master Send.<br><br>
         </div>
         <span id="tsigStatus" class="tsigHint">&nbsp;</span>
     </div>
-    <div class="settingField">
-        <span class="settingLabel">Recording</span>
-        <div><button id="recBtn" type="button">⏺ REC</button></div>
-    </div>
-    <details id="tsigSetup" style="text-align:left; margin-bottom:24px; color:#A3A3A3; font-size:0.85em">
+    <details id="tsigSetup" style="text-align:left; margin-bottom:24px; color:#A3A3A3; font-size:0.85em; opacity:0.4;pointer-events:none">
         <summary style="cursor:pointer; color:#A9ABAB; text-align:center">Time-sig setup &amp; help</summary>
         <div style="padding:12px 8px; line-height:1.5">
             <p style="margin:0 0 8px 0">REAPER's OSC bridge has no time-signature alias, so we set it via a tiny ReaScript. <strong>One-time setup:</strong></p>
