@@ -1320,7 +1320,7 @@ function setupSettingsHandlers(){
         recBtn._wired = true;
         recBtn.addEventListener("click", function(){
             if (recState === "recording") {
-                wwr_req("1016");      // stop
+                wwr_req("40667");     // stop and save all newly recorded media
                 recState = "idle";
                 updateRecBtn();
             } else if (recState === "idle") {
