@@ -46,7 +46,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Horizontal master: 274-unit range, 0 dB at `x ≈ 195`.
 - Vertical sliders: 170-unit range, 0 dB at `y ≈ 75`.
 
-### Key Constants and Globals (in more_me_2.html)
+### Key Constants and Globals (in monarimix.html)
 
 | Variable | Purpose |
 |----------|---------|
@@ -74,17 +74,22 @@ c:\Users\Ari\source\AKReapack\
 │   ├── monarimix.html           (~1680 lines) – The page itself
 │   ├── monarimix.md             – Feature documentation (outdated; needs refresh for pan mode, VOL/PAN button, double-tap)
 │   ├── monarimix_set_timesig.lua   – Required companion: reads tsig num/den from ExtState, applies it
-│   └── monarimix_monitor.lua       – Optional companion: writes live tempo to ExtState
+│   ├── monarimix_monitor.lua       – Optional companion: writes live tempo to ExtState
+│   └── main.js                  – REFERENCE COPY of REAPER's stock web-remote helper (not deployed; see note below)
 ├── deploy.ps1                   – PowerShell script to copy files to REAPER runtime folders
 ├── CONTEXT.md                   – Handoff notes, decisions, loose ends
 ├── INSTALL.md                   – User install guide
 ├── index.xml                    – ReaPack distribution manifest (placeholders: YOUR-USERNAME/YOUR-REPO)
 └── CLAUDE.md                    – This file
 
-Runtime destinations (not in repo):
+Runtime destinations (deployed by deploy.ps1):
 - monarimix.html, monarimix.md  → %APPDATA%\REAPER\reaper_www_root\
 - monarimix_set_timesig.lua, monarimix_monitor.lua  → %APPDATA%\REAPER\Scripts\
-- main.js (REAPER's stock helper)  → Already ships with REAPER; overlaid from Program Files
+
+Not deployed (already provided by REAPER):
+- main.js  → Shipped with REAPER at C:\Program Files\REAPER (x64)\Plugins\reaper_www_root\main.js
+             REAPER's web server overlays user reaper_www_root over install copy, so monarimix.html finds it at <script src="main.js">
+             The repo copy (monarimix/main.js) is documentation only — shows available wwr_* functions and command syntax.
 ```
 
 ## Development Workflow
@@ -103,17 +108,17 @@ This copies the four runtime files to REAPER's resource folders. Hard-reload the
 - **Hard-reload page:** `Ctrl+Shift+R` (desktop) or close-reopen tab (mobile) to flush browser cache.
 - **REAPER resource folder:** Options → Show REAPER resource path in explorer/finder.
 - **Action List:** Shift+/ or Actions menu → Show action list. Use to run/register ReaScripts.
-- **Web-remote API:** Consult [REAPER documentation](https://reaper.fm/sdk/js/wwr_start.html) or the stock `main.js` in REAPER's install for the full command vocabulary.
+- **Web-remote API reference:** See [monarimix/main.js](monarimix/main.js) in the repo — a reference copy of REAPER's stock helper with full command documentation and `wwr_*` function signatures. Also available at [ReaTeam/Doc on GitHub](https://github.com/ReaTeam/Doc/blob/master/web_interface_modding.md).
 
 ### Testing
 
 1. **Locally in REAPER:** Run `.\deploy.ps1`, open REAPER, navigate to the page via the URL shown in Preferences → Control/OSC/web.
-2. **Network device:** Navigate to `http://<reaper-host>:<port>/more_me_2.html` from a phone/tablet on the same LAN.
+2. **Network device:** Navigate to `http://<reaper-host>:<port>/monarimix.html` from a phone/tablet on the same LAN.
 3. **Layout modes:** Toggle between Auto/Vertical/Horizontal via the button or URL hash to verify rendering.
 4. **Pan mode:** Use VOL/PAN toolbar button to switch; verify double-tap-to-center works on each strip.
 5. **Tempo/time-sig:** Test in Project Settings panel; ensure live updates and changes apply.
 
-### Code Map Inside more_me_2.html
+### Code Map Inside monarimix.html
 
 | Section | What it does |
 |---------|---|
@@ -142,9 +147,9 @@ This copies the four runtime files to REAPER's resource folders. Hard-reload the
 See [CONTEXT.md](CONTEXT.md) for full details. Quick summary:
 
 - **License:** Choose MIT (permissive) or GPL-3 (copyleft), add `LICENSE` file, update `index.xml`.
-- **Folder/project name:** "moreme" is a placeholder. Rename before pushing to GitHub.
+- **Project name finalized:** "monarimix" is the current name (previously "moreme" placeholder).
 - **Clean up stale copies:** Delete `reaper_www_root/old/` folder and old script registrations if they exist.
-- **Update `more_me_2.md`:** Document pan mode, VOL/PAN button, double-tap-to-center, Project/General Settings split.
+- **Update `monarimix.md`:** Document pan mode, VOL/PAN button, double-tap-to-center, Project/General Settings split.
 - **Replace GitHub placeholders:** Update `YOUR-USERNAME/YOUR-REPO` in `index.xml` once a repo exists.
 
 ## Notes for Future Work
