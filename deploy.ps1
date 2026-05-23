@@ -30,8 +30,15 @@ $luaTarget = $scriptsRoot
 New-Item -ItemType Directory -Force -Path $wwwRoot     | Out-Null
 New-Item -ItemType Directory -Force -Path $scriptsRoot | Out-Null
 
+# --- Build Vue app -------------------------------------------------------
+Write-Host "Building monarimix..." -ForegroundColor Cyan
+Push-Location (Join-Path $src "monarimix")
+npm run build
+if ($LASTEXITCODE -ne 0) { Pop-Location; throw "npm run build failed" }
+Pop-Location
+
 # --- Copy files ---------------------------------------------------------
-Copy-Item -Force -Path (Join-Path $src "monarimix\monarimix.html")         -Destination $wwwRoot
+Copy-Item -Force -Path (Join-Path $src "monarimix\dist\monarimix.html")    -Destination $wwwRoot
 Copy-Item -Force -Path (Join-Path $src "monarimix\monarimix.md")           -Destination $wwwRoot
 Copy-Item -Force -Path (Join-Path $src "monarimix\monarimix_set_timesig.lua") -Destination $luaTarget
 Copy-Item -Force -Path (Join-Path $src "monarimix\monarimix_monitor.lua")     -Destination $luaTarget

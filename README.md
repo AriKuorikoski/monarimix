@@ -8,9 +8,10 @@ A phone/tablet/laptop-friendly personal monitor mixer for [REAPER](https://www.r
 - **Two mixer modes:**
   - **VOL:** Adjust send levels (default).
   - **PAN:** Adjust pan position for each send. Double-tap any strip to reset to center.
-- **Live tempo & time signature:** Project Settings panel lets performers see and adjust the project's tempo and time signature in real time.
+- **Recording:** One-tap record with a 5-second run-in. Stop saves the project immediately, no dialogs.
+- **Live tempo & time signature:** Settings tab shows project tempo and time signature.
 - **Mute control:** Mute individual receives without leaving the page.
-- **No external services:** Runs on REAPER's built-in web server. No Node, no build step, no internet required.
+- **Runs on REAPER's built-in web server.** No internet required at runtime.
 
 ## Quick Start
 
@@ -48,7 +49,6 @@ A track qualifies as a monitor track when it has **both** receives and a hardwar
 1. Open REAPER's Action List (Shift+/ or Actions menu).
 2. Click "New action..." → "Load ReaScript..." and select `monarimix_set_timesig.lua`.
 3. Run the action once to self-register it.
-4. Open the Monarimix page in a browser. Time-sig controls now work.
 
 ### 4. Open the Page
 
@@ -68,68 +68,53 @@ http://<reaper-host>:8080/monarimix.html
 
 ## Using the App
 
-### Select Your Monitor Track
+Three tabs at the top: **Mixer**, **Recording**, **Settings**.
 
-The dropdown at the top lists all monitor tracks. Pick yours. The mixer populates below.
+### Mixer Tab
 
-### Adjust Levels
+- Select your monitor track from the dropdown.
+- Drag sliders to adjust levels (portrait: horizontal pills; landscape: vertical strips).
+- **VOL/PAN button** next to the dropdown toggles between level and pan adjustment.
+- In PAN mode, **double-tap any strip** to reset its pan to center.
+- **M button** mutes that receive.
 
-- **Horizontal layout (portrait):** Drag pill-shaped sliders left/right.
-- **Vertical layout (landscape):** Channel strips with vertical sliders, mixer-console style.
+### Recording Tab
 
-Both layouts use the same volume curve as REAPER's mixer faders (4th-power taper; 0 dB at ~71% of slider travel).
+- **REC:** Seeks 5 seconds past the end of existing content, then starts recording.
+- **STOP:** Stops recording and saves the project without any dialogs.
 
-### Mute, Pan & Double-Tap
+### Settings Tab
 
-- **M button:** Mutes that receive.
-- **VOL/PAN button (top right):** Cycles between volume and pan mode.
-- **In pan mode, double-tap any strip:** Resets that strip's pan to center.
+- **Project Settings:** Current tempo and time signature.
+- **General Settings:** Layout mode toggle (Auto / Vertical / Horizontal).
 
 ### Layout Modes
 
-The circle-A button (top right) cycles through:
-
-- **Auto:** Follow device orientation (flip on rotate).
-- **Vertical:** Force channel strips (even on portrait phones).
-- **Horizontal:** Force pill sliders (even on landscape phones).
-
 Choice is saved in browser storage; URL hash (`#v`, `#h`, `#auto`) takes precedence on load.
 
-### Project Settings
-
-Tap the dropdown → **Project Settings** to see and adjust:
-- **Tempo:** Live BPM display; set new tempo via text input.
-- **Time Signature:** Live num/den display; set new signature via two text inputs.
-
-### General Settings
-
-Tap the dropdown → **General Settings** to change layout mode or see app version.
+- **Auto:** Follow device orientation (flip on rotate).
+- **Vertical:** Force channel strips regardless of orientation.
+- **Horizontal:** Force pill sliders regardless of orientation.
 
 ## Architecture & Development
 
 See [CLAUDE.md](CLAUDE.md) for:
 - Detailed architecture and design decisions
 - Communication protocol (HTTP web-remote, OSC, ExtState)
-- Code map and key functions
+- Build workflow and file structure
 - How to deploy after editing
 
 ## License
 
-To be determined (MIT or GPL-3). See [#future-work](#future-work).
+To be determined (MIT or GPL-3).
 
 ## Technical Notes
 
-- **No build step.** Plain HTML/CSS/JavaScript with inline SVG.
-- **Forked from REAPER's stock `more_me.html`.** Original Cockos code is wrapped, not modified.
+- **Vue 3 + Vite build.** Source is in `monarimix/src/`. Build output is a single inlined HTML file (`monarimix/dist/monarimix.html`) via `vite-plugin-singlefile`. Run `.\deploy.ps1` to build and deploy.
+- **Forked from REAPER's stock `more_me.html`.** Original Cockos mixer code is wrapped, not modified.
 - **Requires `main.js`** from REAPER's install; automatically overlaid by REAPER's web server.
 - **Tested on:** Chrome, Safari, Firefox (desktop & mobile).
 - **Offline fallback:** Uses system sans-serif if Google Fonts cannot load.
-
-## Future Work
-
-- Choose and apply a license (MIT or GPL-3).
-- Refresh `monarimix.md` feature documentation.
-- Clean up stale copies of scripts in REAPER folders if they exist.
 
 ## Contributing
 
