@@ -1326,7 +1326,7 @@ function setupSettingsHandlers(){
             } else if (recState === "idle") {
                 recState = "seeking";
                 updateRecBtn();
-                wwr_req("40043");     // go to end of project; next BEATPOS reply gives position
+                wwr_req("40043;BEATPOS"); // go to end + request position in one round-trip
             }
         });
     }
