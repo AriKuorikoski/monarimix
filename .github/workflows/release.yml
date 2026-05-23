@@ -1,0 +1,54 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: monarimix/package-lock.json
+
+      - name: Build
+        working-directory: monarimix
+        run: npm ci && npm run build
+
+      # MAJOR.MINOR are bumped manually in this file when needed.
+      # PATCH is the repo-wide run_number — always increasing, never resets.
+      - name: Generate version tag
+        id: version
+        run: echo "tag=v0.1.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+      - name: Collect release artifacts
+        run: |
+          mkdir -p dist-release
+          cp monarimix/dist/monarimix.html       dist-release/
+          cp monarimix/monarimix.md              dist-release/
+          cp monarimix/monarimix_set_timesig.lua dist-release/
+          cp monarimix/monarimix_monitor.lua     dist-release/
+          cp INSTALL.md                          dist-release/
+          cd dist-release && zip ../monarimix-${{ steps.version.outputs.tag }}.zip ./*
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Monarimix ${{ steps.version.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            dist-release/monarimix.html
+            dist-release/monarimix.md
+            dist-release/monarimix_set_timesig.lua
+            dist-release/monarimix_monitor.lua
+            dist-release/INSTALL.md
+            monarimix-${{ steps.version.outputs.tag }}.zip

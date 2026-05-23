@@ -47,8 +47,8 @@ time signature. Layout auto-flips between horizontal (portrait) and vertical
 ]]></changelog>
         <!-- 'file' attribute overrides where ReaPack drops it. webinterface
              type defaults to reaper_www_root, but being explicit doesn't hurt. -->
-        <source file="monarimix.html">https://raw.githubusercontent.com/AriKuorikoski/monarimix/main/monarimix/monarimix.html</source>
-        <source file="monarimix.md">https://raw.githubusercontent.com/AriKuorikoski/monarimix/main/monarimix/monarimix.md</source>
+        <source file="monarimix.html">https://github.com/AriKuorikoski/monarimix/releases/latest/download/monarimix.html</source>
+        <source file="monarimix.md">https://github.com/AriKuorikoski/monarimix/releases/latest/download/monarimix.md</source>
       </version>
     </reapack>
   </category>
@@ -73,7 +73,7 @@ it. Run once from the Action List after install for self-registration.
 + Initial release. Sets project time signature non-interactively via
   SetTempoTimeSigMarker(). Self-registers its command ID for the web page.
 ]]></changelog>
-        <source>https://raw.githubusercontent.com/AriKuorikoski/monarimix/main/monarimix/monarimix_set_timesig.lua</source>
+        <source>https://github.com/AriKuorikoski/monarimix/releases/latest/download/monarimix_set_timesig.lua</source>
       </version>
     </reapack>
 
@@ -91,7 +91,7 @@ REAPER Action List. Add to __startup.lua to auto-launch at REAPER start.
         <changelog><![CDATA[
 + Initial release. Defer-based loop with single-instance guard.
 ]]></changelog>
-        <source>https://raw.githubusercontent.com/AriKuorikoski/monarimix/main/monarimix/monarimix_monitor.lua</source>
+        <source>https://github.com/AriKuorikoski/monarimix/releases/latest/download/monarimix_monitor.lua</source>
       </version>
     </reapack>
   </category>
@@ -109,8 +109,8 @@ REAPER Action List. Add to __startup.lua to auto-launch at REAPER start.
       </metadata>
       <version name="1.0.0" author="Ari Kuorikoski" time="2026-05-19T12:00:00Z">
         <changelog>+ Initial documentation.</changelog>
-        <source file="MoreMe/INSTALL.md">https://raw.githubusercontent.com/AriKuorikoski/monarimix/main/INSTALL.md</source>
-        <source file="MoreMe/monarimix.md">https://raw.githubusercontent.com/AriKuorikoski/monarimix/main/monarimix/monarimix.md</source>
+        <source file="MoreMe/INSTALL.md">https://github.com/AriKuorikoski/monarimix/releases/latest/download/INSTALL.md</source>
+        <source file="MoreMe/monarimix.md">https://github.com/AriKuorikoski/monarimix/releases/latest/download/monarimix.md</source>
       </version>
     </reapack>
   </category>
