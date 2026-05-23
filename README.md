@@ -1,5 +1,11 @@
 # Monarimix — Personal Monitor Mixer for REAPER
 
+This tool was built for my own live-sound work. I'm publishing it in case anyone else finds it useful. Use it as-is, fork it, adapt it — no strings attached beyond the MIT license terms.
+
+The mixer logic started from Cockos Incorporated's `more_me.html`, which ships with REAPER. That code has been wrapped and extended rather than replaced; see the [LICENSE](LICENSE) file for attribution.
+
+---
+
 A phone/tablet/laptop-friendly personal monitor mixer for [REAPER](https://www.reaper.fm/) (a digital audio workstation). Each performer opens a URL, selects their monitor track, and dials in their own mix of receives and pans—without needing to bother the FOH engineer.
 
 ## Features
@@ -107,12 +113,6 @@ See [CLAUDE.md](CLAUDE.md) for:
 ## License
 
 MIT — see [LICENSE](LICENSE).
-
-## Personal project, open to all
-
-This tool was built for my own live-sound work. I'm publishing it in case anyone else finds it useful. Use it as-is, fork it, adapt it — no strings attached beyond the MIT license terms.
-
-The mixer logic started from Cockos Incorporated's `more_me.html`, which ships with REAPER. That code has been wrapped and extended rather than replaced; see the LICENSE file for attribution.
 
 ## Technical Notes
 
