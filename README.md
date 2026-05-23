@@ -106,12 +106,18 @@ See [CLAUDE.md](CLAUDE.md) for:
 
 ## License
 
-To be determined (MIT or GPL-3).
+MIT — see [LICENSE](LICENSE).
+
+## Personal project, open to all
+
+This tool was built for my own live-sound work. I'm publishing it in case anyone else finds it useful. Use it as-is, fork it, adapt it — no strings attached beyond the MIT license terms.
+
+The mixer logic started from Cockos Incorporated's `more_me.html`, which ships with REAPER. That code has been wrapped and extended rather than replaced; see the LICENSE file for attribution.
 
 ## Technical Notes
 
 - **Vue 3 + Vite build.** Source is in `monarimix/src/`. Build output is a single inlined HTML file (`monarimix/dist/monarimix.html`) via `vite-plugin-singlefile`. Run `.\deploy.ps1` to build and deploy.
-- **Forked from REAPER's stock `more_me.html`.** Original Cockos mixer code is wrapped, not modified.
+- **Derived from REAPER's stock `more_me.html`.** Original Cockos mixer code is wrapped, not rewritten.
 - **Requires `main.js`** from REAPER's install; automatically overlaid by REAPER's web server.
 - **Tested on:** Chrome, Safari, Firefox (desktop & mobile).
 - **Offline fallback:** Uses system sans-serif if Google Fonts cannot load.

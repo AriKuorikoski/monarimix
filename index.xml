@@ -12,7 +12,7 @@
   After importing, they refresh the repository and install MoreMe 2 with
   a single click. ReaPack handles file placement, updates, and removal.
 -->
-<index version="1" name="MoreMe 2">
+<index version="1" name="MoreMe 2" license="MIT">
   <metadata>
     <description><![CDATA[
 Personal monitor mixer for REAPER. Each performer opens a phone/tablet/laptop
