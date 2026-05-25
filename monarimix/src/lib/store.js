@@ -8,6 +8,9 @@ export const useStore = defineStore('main', () => {
     const currentTsNum = ref(4)
     const currentTsDen = ref(4)
     const lastSentTempo = ref(120)
+    const openProjects = ref([])       // project names from monitor script
+    const currentProjectIdx = ref(0)   // index of currently focused project
+    const monitorRunning = ref(false)  // true when monarimix_monitor.lua is active
 
     function handleReply(results) {
         const lines = results.split('\n')
@@ -49,6 +52,16 @@ export const useStore = defineStore('main', () => {
                     const bpm = parseFloat(tok[3])
                     if (!isNaN(bpm) && bpm > 0) lastSentTempo.value = Math.round(bpm * 10) / 10
                 }
+                if (tok[2] === 'monitor_active') {
+                    monitorRunning.value = tok[3] === '1'
+                }
+                if (tok[2] === 'open_projects') {
+                    openProjects.value = tok[3] ? tok[3].split('|') : []
+                }
+                if (tok[2] === 'current_project_idx') {
+                    const idx = parseInt(tok[3], 10)
+                    if (!isNaN(idx)) currentProjectIdx.value = idx
+                }
             }
         }
         pollVersion.value++
@@ -61,6 +74,9 @@ export const useStore = defineStore('main', () => {
         currentTsNum,
         currentTsDen,
         lastSentTempo,
+        openProjects,
+        currentProjectIdx,
+        monitorRunning,
         handleReply,
     }
 })

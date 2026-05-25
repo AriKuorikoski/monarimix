@@ -1,16 +1,30 @@
 <template>
   <div class="settings-panel">
+  
 
-    <h2>PROJECT SETTINGS</h2>
+    <div class="settingField" v-if="store.openProjects.length > 0">
+      <H2>Active project</H2>
+      <select class="settingSelect" :value="store.currentProjectIdx" @change="onSwitchProject">
+        <option v-for="(name, idx) in store.openProjects" :key="idx" :value="idx">
+          {{ name || '(untitled)' }}
+        </option>
+      </select>
+    </div>
+    <div class="settingField" v-else style="opacity:0.4">
+      <span class="settingLabel">Active project</span>
+      <span style="font-size:0.85em;color:#A9ABAB">{{ store.monitorRunning ? 'Loading…' : 'Start monarimix_monitor.lua' }}</span>
+    </div>
+
+    <h2 style="margin-top:32px">PROJECT SETTINGS</h2>
 
     <div class="settingField" style="opacity:0.4;pointer-events:none">
       <span class="settingLabel">Tempo (BPM)</span>
       <div class="tempoCtrl">
-        <button class="tempoBtn" type="button">&minus;1</button>
-        <button class="tempoBtn" type="button">&minus;0.1</button>
+        <!-- <button class="tempoBtn" type="button">&minus;1</button>
+        <button class="tempoBtn" type="button">&minus;0.1</button> -->
         <input id="tempoInput" type="number" step="0.1" min="20" max="500" :value="store.lastSentTempo" disabled />
-        <button class="tempoBtn" type="button">+0.1</button>
-        <button class="tempoBtn" type="button">+1</button>
+        <!-- <button class="tempoBtn" type="button">+0.1</button>
+        <button class="tempoBtn" type="button">+1</button> -->
       </div>
     </div>
 
@@ -46,7 +60,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useStore } from '../lib/store.js'
 import { cycleMode, getModeLabel, getModeIcon } from '../lib/mixer.js'
 
@@ -60,5 +74,11 @@ function onCycleMode() {
     modeLabel.value = getModeLabel()
     modeIcon.value = getModeIcon()
   })
+}
+
+function onSwitchProject(e) {
+  const idx = parseInt(e.target.value, 10)
+  store.currentProjectIdx = idx  // optimistic update — prevents flicker back to old value
+  window.wwr_req(`SET/PROJEXTSTATE/MoreMe/switch_to_project/${idx}`)
 }
 </script>

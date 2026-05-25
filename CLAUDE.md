@@ -38,12 +38,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 2. **OSC Bridge (tempo only):** Routed through `Default.ReaperOSC`. Single-slash syntax: `OSC/tempo/raw:<bpm>`.
 
-3. **ExtState side-channel (tempo readback & script discovery):** Project-scoped key-value storage when web-remote API lacks the command.
-   - Tempo readback: Optional `monarimix_monitor.lua` writes `Master_GetTempo()` to `ExtState["MoreMe"]["current_tempo"]` on a defer loop. Page polls every 250 ms while Project Settings is open.
-   - Time signature: Read live via `BEATPOS` polling (includes `ts_numerator` and `ts_denominator`). Set via page write to `ExtState["MoreMe"]["tsig_num"]` / `["tsig_den"]`, then trigger `monarimix_set_timesig.lua`.
+3. **ExtState side-channel (tempo readback, script discovery, project tab switching):** Key-value storage bridging capabilities not exposed by the web-remote API.
+   - Tempo readback: `monarimix_monitor.lua` writes `Master_GetTempo()` to `ExtState["MoreMe"]["current_tempo"]` on every defer tick when it changes. Page polls every 500 ms via the ExtState poll loop.
+   - Time signature: Read live via `BEATPOS` (includes `ts_numerator` and `ts_denominator`). Set via page write to `ExtState["MoreMe"]["tsig_num"]` / `["tsig_den"]`, then trigger `monarimix_set_timesig.lua`.
    - Script auto-discovery: `monarimix_set_timesig.lua` self-registers its command ID into `ExtState["MoreMe"]["tsig_action_id"]` so the page finds it automatically.
+   - Project list: `monarimix_monitor.lua` writes pipe-delimited project names to `ExtState["MoreMe"]["open_projects"]` and the focused project index to `ExtState["MoreMe"]["current_project_idx"]` each tick.
+   - Project switch request: Page writes target index to `SET/PROJEXTSTATE/MoreMe/switch_to_project/<idx>` (project-scoped, the only writable ExtState path from the web remote). Lua reads and clears the key BEFORE calling `SelectProjectInstance` (critical — post-switch project context would corrupt a post-switch clear).
 
-**Polling & rendering flow:** `wwr_req_recur("NTRACK;TRACK;BEATPOS", 10)` polls every ~100 ms. Original `wwr_onreply` parses `NTRACK`/`TRACK`/`SEND` lines into top-level arrays, renders horizontal layout. A wrapper adds BEATPOS parsing, EXTSTATE polling for tempo/script-ID, and vertical-mixer rendering.
+**Polling & rendering flow:** Two independent `wwr_req_recur` calls. `("NTRACK;TRACK;BEATPOS", 10)` every ~100 ms — parses track/send arrays into mixer. `("GET/EXTSTATE/MoreMe/monitor_active;GET/EXTSTATE/MoreMe/open_projects;GET/EXTSTATE/MoreMe/current_project_idx;GET/EXTSTATE/MoreMe/current_tempo", 500)` every 500 ms — feeds store for Settings tab display.
 
 ### Volume Math
 
@@ -81,7 +83,7 @@ c:\Users\Ari\source\AKReapack\
 │   ├── monarimix.html           – Vite HTML entry point (17 lines; references src/main.js + external main.js)
 │   ├── monarimix.md             – User-facing feature documentation (deployed to wwwroot)
 │   ├── monarimix_set_timesig.lua   – Required companion: reads tsig num/den from ExtState, applies it
-│   ├── monarimix_monitor.lua       – Optional companion: writes live tempo to ExtState
+│   ├── monarimix_monitor.lua       – Optional companion: writes live tempo, project list, and current project index to ExtState; handles project switch requests
 │   ├── main.js                  – REFERENCE COPY of REAPER's stock web-remote helper (not deployed)
 │   ├── package.json / vite.config.js
 │   ├── dist/
@@ -156,12 +158,12 @@ npm run build
 |---------|---|
 | `src/style.css` | All global CSS. `@media (orientation: …)` for auto mode; `body.force-vert`/`force-horiz` for overrides. |
 | `src/lib/mixer.js` | Module-level mixer state vars; all drag handlers; `renderVertical()`; `stockWwrOnReply()`; `buildWwrOnReply(store)` factory; mode management; pan helpers. |
-| `src/lib/store.js` | Pinia store: `activeTab`, `recState`, `currentTsNum/Den`, `pollVersion`, `handleReply()` (BEATPOS + EXTSTATE parser). |
+| `src/lib/store.js` | Pinia store: `activeTab`, `recState`, `currentTsNum/Den`, `pollVersion`, `openProjects`, `currentProjectIdx`, `monitorRunning`, `handleReply()` (BEATPOS + EXTSTATE parser). |
 | `src/lib/reaper.js` | `initReaper()`: wires `window.wwr_onreply` via `buildWwrOnReply`, starts orientation listener, starts polling. |
 | `src/App.vue` | Root: `<TabBar>` then three tab wrappers with `v-show` (not `v-if` — ensures DOM elements always exist for stock code). |
 | `src/tabs/MixerTab.vue` | `#trackSelectRow` (dropdown + VOL/PAN btn); `.trackRow2`, `#receives`, `#vertMixer`; `#backLoad` with all 4 SVG templates. |
 | `src/tabs/RecordingTab.vue` | REC/STOP button; drives `store.recState`; sends wwr_req commands. |
-| `src/tabs/SettingsTab.vue` | Project (tempo/tsig display) + General (layout mode toggle) sub-sections. |
+| `src/tabs/SettingsTab.vue` | Active project dropdown (switches REAPER project tabs via ExtState); Project (tempo/tsig display); General (layout mode toggle). |
 | `#backLoad` div (in MixerTab) | Hidden SVG/HTML templates cloned at runtime. `trackRow2Svg`, `trackSendSvg` (horizontal); `trackRow2SvgVert`, `trackSendSvgVert` (vertical). |
 
 ### Key Architectural Decisions & Lessons Learned
@@ -186,7 +188,13 @@ npm run build
 
 10. **Debug instrumentation was removed.** Earlier: a "last sent / last reply" panel inside Project Settings for diagnosing OSC issues. It served its purpose and was cleaned up when the feature matured.
 
-11. **Vue 3 + Vite wrap-not-rewrite migration.** The ~800 lines of mixer JS (drag handlers, renderVertical, stockWwrOnReply) moved verbatim into `mixer.js` as module-level functions — not Vue-reactive. Vue components provide the required DOM containers (`#receives`, `#vertMixer`, etc.); stock code manipulates them via `getElementById`. `v-show` (not `v-if`) is used for tab containers so DOM elements always exist. `buildWwrOnReply(store)` is a factory that composes `stockWwrOnReply` → `store.handleReply` → `renderVertical` as `window.wwr_onreply`. Pinia store holds only what Vue components need reactively (`activeTab`, `recState`, tsig, `pollVersion`); mixer arrays stay as module-level JS variables.
+11. **Project tab switching uses global ExtState for reads, project ExtState for writes.** REAPER's web-remote API has no project tab commands (no CURTAB, NPROJ, SWITCHTAB). The solution bridges the gap: Lua writes the project list and current index to global ExtState (readable via `GET/EXTSTATE`); the page writes the switch request to project ExtState via `SET/PROJEXTSTATE` (the only writable path). The Lua script clears the switch key BEFORE calling `SelectProjectInstance` — if it cleared after, the post-switch project context would be the new project, and the clear would write to the new project instead of the old one.
+
+12. **Optimistic UI update prevents dropdown flicker on project switch.** Vue's `:value` binding resets a `<select>` to the store value on every reactive update. When the user picks project B, the 500 ms ExtState poll may fire and update the store with A (the old value) before REAPER confirms the switch. Fix: `store.currentProjectIdx = idx` immediately in `onSwitchProject()` before sending the wwr_req, so the store already holds B when Vue re-renders.
+
+13. **Always-on ExtState polling is simpler than conditional polling.** An earlier design started/stopped polling on tab open/close via a Vue `watch(() => store.activeTab, ...)`. It silently failed (watch not firing as expected). Replaced with unconditional `wwr_req_recur` in `reaper.js` — 500 ms overhead is negligible, and the always-on approach avoids Vue lifecycle timing issues entirely.
+
+15. **Vue 3 + Vite wrap-not-rewrite migration.** The ~800 lines of mixer JS (drag handlers, renderVertical, stockWwrOnReply) moved verbatim into `mixer.js` as module-level functions — not Vue-reactive. Vue components provide the required DOM containers (`#receives`, `#vertMixer`, etc.); stock code manipulates them via `getElementById`. `v-show` (not `v-if`) is used for tab containers so DOM elements always exist. `buildWwrOnReply(store)` is a factory that composes `stockWwrOnReply` → `store.handleReply` → `renderVertical` as `window.wwr_onreply`. Pinia store holds only what Vue components need reactively (`activeTab`, `recState`, tsig, `pollVersion`); mixer arrays stay as module-level JS variables.
 
 ## Pending Decisions & Loose Ends
 

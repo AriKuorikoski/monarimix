@@ -367,6 +367,24 @@ body.force-vert #appContainer {
     font-size: 0.75em;
 }
 
+/* Project-tab dropdown in Settings panel */
+.settingSelect {
+    width: 100%;
+    color: #A9ABAB;
+    background-color: #262626;
+    border: none;
+    font-size: 1.1em;
+    padding: 10px 16px;
+    border-radius: 20px;
+    -webkit-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+    font-family: 'Open Sans', sans-serif;
+    outline: none;
+    cursor: pointer;
+    text-align: center;
+}
+
 /* Layout toggle inside Settings panel */
 #layoutToggleRow {
     display: flex;
