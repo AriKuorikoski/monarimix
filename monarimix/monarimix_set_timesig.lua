@@ -6,7 +6,7 @@
 --      so the web page can auto-discover it (no copy-pasting of "_RS..."
 --      strings required).
 --
---   2. Reads project extstate ("MoreMe" / "tsig_num" + "tsig_den") and
+--   2. Reads project extstate ("monarimix" / "tsig_num" + "tsig_den") and
 --      applies that pair as the project's initial time signature.
 --
 -- Install:
@@ -30,9 +30,9 @@ if cmdID and cmdID ~= 0 then
     local named = reaper.ReverseNamedCommandLookup(cmdID)
     if named and named ~= "" then
         local full = "_" .. named
-        local existing = reaper.GetExtState("MoreMe", "tsig_action_id")
+        local existing = reaper.GetExtState("monarimix", "tsig_action_id")
         if existing ~= full then
-            reaper.SetExtState("MoreMe", "tsig_action_id", full, true)
+            reaper.SetExtState("monarimix", "tsig_action_id", full, true)
         end
     end
 end
@@ -40,8 +40,8 @@ end
 -- ---------- 2. Apply the time signature ----------
 local proj = 0  -- current project
 
-local _, num_str = reaper.GetProjExtState(proj, "MoreMe", "tsig_num")
-local _, den_str = reaper.GetProjExtState(proj, "MoreMe", "tsig_den")
+local _, num_str = reaper.GetProjExtState(proj, "monarimix", "tsig_num")
+local _, den_str = reaper.GetProjExtState(proj, "monarimix", "tsig_den")
 local num = tonumber(num_str)
 local den = tonumber(den_str)
 
@@ -72,5 +72,5 @@ local current_bpm = reaper.Master_GetTempo()
 reaper.SetTempoTimeSigMarker(proj, found_idx, 0, -1, -1,
                              current_bpm, num, den, false)
 
-reaper.Undo_EndBlock("MoreMe: set time signature", -1)
+reaper.Undo_EndBlock("monarimix: set time signature", -1)
 reaper.UpdateTimeline()

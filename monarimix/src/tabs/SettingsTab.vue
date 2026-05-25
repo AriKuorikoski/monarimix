@@ -79,6 +79,6 @@ function onCycleMode() {
 function onSwitchProject(e) {
   const idx = parseInt(e.target.value, 10)
   store.currentProjectIdx = idx  // optimistic update — prevents flicker back to old value
-  window.wwr_req(`SET/PROJEXTSTATE/MoreMe/switch_to_project/${idx}`)
+  window.wwr_req(`SET/PROJEXTSTATE/monarimix/switch_to_project/${idx}`)
 }
 </script>

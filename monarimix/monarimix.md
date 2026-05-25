@@ -145,16 +145,16 @@ Two optional Lua scripts extend functionality beyond REAPER's stock web-remote A
 
 Runs a continuous defer loop in the background. Responsibilities:
 
-- Writes the live project tempo to `ExtState["MoreMe"]["current_tempo"]` whenever it changes, so the Settings tab can display it without a separate OSC connection.
-- Writes the list of open project names (pipe-delimited) to `ExtState["MoreMe"]["open_projects"]`.
-- Writes the current project index to `ExtState["MoreMe"]["current_project_idx"]`.
+- Writes the live project tempo to `ExtState["monarimix"]["current_tempo"]` whenever it changes, so the Settings tab can display it without a separate OSC connection.
+- Writes the list of open project names (pipe-delimited) to `ExtState["monarimix"]["open_projects"]`.
+- Writes the current project index to `ExtState["monarimix"]["current_project_idx"]`.
 - Polls for a `switch_to_project` key in project ExtState and calls `reaper.SelectProjectInstance()` when one is found.
 
 Running the action again while it is active stops it (toggle behaviour). To start automatically on REAPER launch, call the action from `__startup.lua` in your REAPER resource folder.
 
 ### monarimix_set_timesig.lua
 
-Required for time signature changes from the Settings tab (if/when the UI exposes that control). Reads `ExtState["MoreMe"]["tsig_num"]` / `["tsig_den"]`, applies the new time signature via REAPER's API, and self-registers its command ID into `ExtState["MoreMe"]["tsig_action_id"]` so the page can trigger it without manual ID entry.
+Required for time signature changes from the Settings tab (if/when the UI exposes that control). Reads `ExtState["monarimix"]["tsig_num"]` / `["tsig_den"]`, applies the new time signature via REAPER's API, and self-registers its command ID into `ExtState["monarimix"]["tsig_action_id"]` so the page can trigger it without manual ID entry.
 
 ## Behind the scenes
 
@@ -163,7 +163,7 @@ Required for time signature changes from the Settings tab (if/when the UI expose
 The page runs two independent poll loops:
 
 - **`wwr_req_recur("NTRACK;TRACK;BEATPOS", 10)`** — every ~100 ms. Fetches track count, per-track send info, and beat position (which carries the live time signature).
-- **`wwr_req_recur("GET/EXTSTATE/MoreMe/...", 500)`** — every 500 ms. Fetches monitor script status, open project list, current project index, and live tempo. These values are only available when `monarimix_monitor.lua` is running.
+- **`wwr_req_recur("GET/EXTSTATE/monarimix/...", 500)`** — every 500 ms. Fetches monitor script status, open project list, current project index, and live tempo. These values are only available when `monarimix_monitor.lua` is running.
 
 ### Commands sent to REAPER
 

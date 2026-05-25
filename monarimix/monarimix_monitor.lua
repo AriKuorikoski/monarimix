@@ -24,7 +24,7 @@
 -- Use a non-persistent ExtState slot as a "monitor running" flag. If it
 -- already says "1", a previous invocation is already looping -- we treat
 -- a second invocation as a "stop" request.
-local FLAG_SECTION = "MoreMe"
+local FLAG_SECTION = "monarimix"
 local FLAG_KEY     = "monitor_active"
 
 if reaper.GetExtState(FLAG_SECTION, FLAG_KEY) == "1" then
@@ -52,9 +52,9 @@ local function tick()
     -- Handle project-switch request from web page.
     -- Clear the key BEFORE switching so the post-switch project context is clean.
     local cur_proj = reaper.EnumProjects(-1, "")
-    local retval_sw, switch_to = reaper.GetProjExtState(cur_proj, "MoreMe", "switch_to_project")
+    local retval_sw, switch_to = reaper.GetProjExtState(cur_proj, "monarimix", "switch_to_project")
     if retval_sw == 1 and switch_to ~= "" then
-        reaper.SetProjExtState(cur_proj, "MoreMe", "switch_to_project", "")
+        reaper.SetProjExtState(cur_proj, "monarimix", "switch_to_project", "")
         local idx = tonumber(switch_to)
         if idx then
             local target = reaper.EnumProjects(idx, "")

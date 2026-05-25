@@ -39,13 +39,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 2. **OSC Bridge (tempo only):** Routed through `Default.ReaperOSC`. Single-slash syntax: `OSC/tempo/raw:<bpm>`.
 
 3. **ExtState side-channel (tempo readback, script discovery, project tab switching):** Key-value storage bridging capabilities not exposed by the web-remote API.
-   - Tempo readback: `monarimix_monitor.lua` writes `Master_GetTempo()` to `ExtState["MoreMe"]["current_tempo"]` on every defer tick when it changes. Page polls every 500 ms via the ExtState poll loop.
-   - Time signature: Read live via `BEATPOS` (includes `ts_numerator` and `ts_denominator`). Set via page write to `ExtState["MoreMe"]["tsig_num"]` / `["tsig_den"]`, then trigger `monarimix_set_timesig.lua`.
-   - Script auto-discovery: `monarimix_set_timesig.lua` self-registers its command ID into `ExtState["MoreMe"]["tsig_action_id"]` so the page finds it automatically.
-   - Project list: `monarimix_monitor.lua` writes pipe-delimited project names to `ExtState["MoreMe"]["open_projects"]` and the focused project index to `ExtState["MoreMe"]["current_project_idx"]` each tick.
-   - Project switch request: Page writes target index to `SET/PROJEXTSTATE/MoreMe/switch_to_project/<idx>` (project-scoped, the only writable ExtState path from the web remote). Lua reads and clears the key BEFORE calling `SelectProjectInstance` (critical — post-switch project context would corrupt a post-switch clear).
+   - Tempo readback: `monarimix_monitor.lua` writes `Master_GetTempo()` to `ExtState["monarimix"]["current_tempo"]` on every defer tick when it changes. Page polls every 500 ms via the ExtState poll loop.
+   - Time signature: Read live via `BEATPOS` (includes `ts_numerator` and `ts_denominator`). Set via page write to `ExtState["monarimix"]["tsig_num"]` / `["tsig_den"]`, then trigger `monarimix_set_timesig.lua`.
+   - Script auto-discovery: `monarimix_set_timesig.lua` self-registers its command ID into `ExtState["monarimix"]["tsig_action_id"]` so the page finds it automatically.
+   - Project list: `monarimix_monitor.lua` writes pipe-delimited project names to `ExtState["monarimix"]["open_projects"]` and the focused project index to `ExtState["monarimix"]["current_project_idx"]` each tick.
+   - Project switch request: Page writes target index to `SET/PROJEXTSTATE/monarimix/switch_to_project/<idx>` (project-scoped, the only writable ExtState path from the web remote). Lua reads and clears the key BEFORE calling `SelectProjectInstance` (critical — post-switch project context would corrupt a post-switch clear).
 
-**Polling & rendering flow:** Two independent `wwr_req_recur` calls. `("NTRACK;TRACK;BEATPOS", 10)` every ~100 ms — parses track/send arrays into mixer. `("GET/EXTSTATE/MoreMe/monitor_active;GET/EXTSTATE/MoreMe/open_projects;GET/EXTSTATE/MoreMe/current_project_idx;GET/EXTSTATE/MoreMe/current_tempo", 500)` every 500 ms — feeds store for Settings tab display.
+**Polling & rendering flow:** Two independent `wwr_req_recur` calls. `("NTRACK;TRACK;BEATPOS", 10)` every ~100 ms — parses track/send arrays into mixer. `("GET/EXTSTATE/monarimix/monitor_active;GET/EXTSTATE/monarimix/open_projects;GET/EXTSTATE/monarimix/current_project_idx;GET/EXTSTATE/monarimix/current_tempo", 500)` every 500 ms — feeds store for Settings tab display.
 
 ### Volume Math
 
@@ -176,7 +176,7 @@ npm run build
 
 4. **Time signature requires a ReaScript.** No built-in OSC alias exists for it. Adding `TIMESIG_NUMERATOR` to `Default.ReaperOSC` doesn't help — the action descriptions in that file must be REAPER-recognized; you can't invent custom names. Solution: page writes desired num/den to project ExtState, then triggers the script.
 
-5. **Self-registration removes copy-paste friction.** `monarimix_set_timesig.lua` learns its own command ID via `reaper.get_action_context()` + `reaper.ReverseNamedCommandLookup()` and writes it to `ExtState["MoreMe"]["tsig_action_id"]`. Page picks it up automatically; manual paste stays as a fallback for edge cases.
+5. **Self-registration removes copy-paste friction.** `monarimix_set_timesig.lua` learns its own command ID via `reaper.get_action_context()` + `reaper.ReverseNamedCommandLookup()` and writes it to `ExtState["monarimix"]["tsig_action_id"]`. Page picks it up automatically; manual paste stays as a fallback for edge cases.
 
 6. **Global VOL/PAN toggle, not per-strip.** Earlier iteration: each strip's track-name label toggled pan mode for that strip. Abandoned because the SVG text target was unreliable on mobile (text node inside slider's drag area causes mis-targeting). Current design: one toolbar button (`VOL` ↔ `PAN`), one global `mixerMode` flag, both layouts read it during drag and rendering. Both modes share the same code paths; the difference is a few conditional branches.
 

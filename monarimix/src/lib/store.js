@@ -38,7 +38,7 @@ export const useStore = defineStore('main', () => {
                 }
             }
 
-            if (tok[0] === 'EXTSTATE' && tok.length >= 4 && tok[1] === 'MoreMe') {
+            if (tok[0] === 'EXTSTATE' && tok.length >= 4 && tok[1] === 'monarimix') {
                 if (tok[2] === 'tsig_action_id') {
                     const id = (tok[3] || '').trim()
                     if (id) {
