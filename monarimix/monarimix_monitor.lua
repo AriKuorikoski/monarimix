@@ -24,7 +24,7 @@
 -- Use a non-persistent ExtState slot as a "monitor running" flag. If it
 -- already says "1", a previous invocation is already looping -- we treat
 -- a second invocation as a "stop" request.
-local FLAG_SECTION = "MoreMe"
+local FLAG_SECTION = "monarimix"
 local FLAG_KEY     = "monitor_active"
 
 if reaper.GetExtState(FLAG_SECTION, FLAG_KEY) == "1" then
@@ -44,8 +44,40 @@ local function tick()
     -- Honour the toggle-off signal.
     if reaper.GetExtState(FLAG_SECTION, FLAG_KEY) ~= "1" then
         reaper.DeleteExtState(FLAG_SECTION, "current_tempo", false)
+        reaper.DeleteExtState(FLAG_SECTION, "open_projects", false)
+        reaper.DeleteExtState(FLAG_SECTION, "current_project_idx", false)
         return
     end
+
+    -- Handle project-switch request from web page.
+    -- Clear the key BEFORE switching so the post-switch project context is clean.
+    local cur_proj = reaper.EnumProjects(-1, "")
+    local retval_sw, switch_to = reaper.GetProjExtState(cur_proj, "monarimix", "switch_to_project")
+    if retval_sw == 1 and switch_to ~= "" then
+        reaper.SetProjExtState(cur_proj, "monarimix", "switch_to_project", "")
+        local idx = tonumber(switch_to)
+        if idx then
+            local target = reaper.EnumProjects(idx, "")
+            if target then reaper.SelectProjectInstance(target) end
+        end
+    end
+
+    -- Write list of open project names (pipe-delimited) and current project index.
+    local names = {}
+    local cur_idx = 0
+    local i = 0
+    cur_proj = reaper.EnumProjects(-1, "")
+    while true do
+        local proj, path = reaper.EnumProjects(i, 2048)
+        if proj == nil then break end
+        -- Derive display name from filename; fall back to index for unsaved projects.
+        local pname = (path ~= "" and path:match("([^/\\]+)%.%a+$")) or ("project " .. (i + 1))
+        table.insert(names, pname)
+        if proj == cur_proj then cur_idx = i end
+        i = i + 1
+    end
+    reaper.SetExtState(FLAG_SECTION, "open_projects", table.concat(names, "|"), false)
+    reaper.SetExtState(FLAG_SECTION, "current_project_idx", tostring(cur_idx), false)
 
     local tempo = reaper.Master_GetTempo()
     if not last_tempo or math.abs(tempo - last_tempo) > 0.001 then
